@@ -4,7 +4,7 @@ Aggregates the firmware and hardware documentation for all Ataraxis Micro Contro
 platform data acquisition systems.
 
 ![c++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=C%2B%2B&logoColor=white)
-![license](https://img.shields.io/badge/license-GPLv3-blue)
+![license](https://img.shields.io/badge/license-Apache_2.0-blue)
 ---
 
 ## Detailed Description
@@ -121,7 +121,7 @@ This project uses [semantic versioning](https://semver.org/). See the
 
 ## License
 
-This project is licensed under the GPL3 License: see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License, Version 2.0: see the [LICENSE](LICENSE) file for details.
 
 ---
 
