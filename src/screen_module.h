@@ -1,8 +1,8 @@
 /**
  * @file
  *
- * @brief Provides the ScreenModule class that controls the screen power boards used in the Sun lab's Virtual
- * Reality system.
+ * @brief Provides the ScreenModule class that controls the screen power boards used in the Sollertia platform's
+ * Virtual Reality system.
  */
 
 #ifndef SCREEN_MODULE_H

@@ -158,7 +158,7 @@ class ValveModule final : public Module
             }
 
             // Resets the custom_parameters structure fields to their default values.
-            _custom_parameters.pulse_duration    = 35000;  // ~ 5.0 uL of water in the current Sun lab system.
+            _custom_parameters.pulse_duration    = 35000;  // ~ 5.0 uL of water in the reference acquisition system.
             _custom_parameters.calibration_count = 500;    // The valve is pulsed 500 times during calibration.
 
             // Note, tone duration is set depending on whether the tone pin is used at all.
