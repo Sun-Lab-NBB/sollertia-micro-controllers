@@ -54,14 +54,14 @@ class ScreenModule final : public Module
         /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
-            return _communication.ExtractModuleParameters(_custom_parameters);
+            return ExtractParameters(_custom_parameters);
         }
 
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // Toggles screen power state
                 case kModuleCommands::kToggle: Toggle(); return true;
@@ -109,7 +109,7 @@ class ScreenModule final : public Module
         /// simulate pressing and releasing the screens' power button.
         void Toggle()
         {
-            switch (execution_parameters.stage)
+            switch (get_command_stage())
             {
                 // Simulates pressing the screens' power button
                 case 1:

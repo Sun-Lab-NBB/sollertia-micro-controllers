@@ -55,7 +55,7 @@ class BrakeModule final : public Module
         /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
-            if (_communication.ExtractModuleParameters(_custom_parameters))
+            if (ExtractParameters(_custom_parameters))
             {
                 // Adjusts the PWM value to account for whether the brake is normally engaged. This ensures that the
                 // strength of 255 means the brake is fully engaged.
@@ -71,7 +71,7 @@ class BrakeModule final : public Module
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // EnableBrake
                 case kModuleCommands::kToggleOn: EnableBrake(); return true;
@@ -158,7 +158,7 @@ class BrakeModule final : public Module
         /// disengages it.
         void SendPulse()
         {
-            switch (execution_parameters.stage)
+            switch (get_command_stage())
             {
                 // Engages the brake at maximum strength.
                 case 1:

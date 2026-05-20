@@ -55,14 +55,14 @@ class TorqueModule final : public Module
         /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
-            return _communication.ExtractModuleParameters(_custom_parameters);
+            return ExtractParameters(_custom_parameters);
         }
 
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // CheckState
                 case kModuleCommands::kCheckState: CheckState(); return true;
@@ -87,8 +87,7 @@ class TorqueModule final : public Module
             // Notifies the PC about the initial sensor state.
             SendData(
                 static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),  // Direction is not relevant for the 0 value
-                kPrototypes::kOneUint16,
-                0
+                static_cast<uint16_t>(0)
             );
 
             return true;
@@ -169,8 +168,7 @@ class TorqueModule final : public Module
                 {
                     SendData(
                         static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),  // Uses CCW for 0-torque reporting
-                        kPrototypes::kOneUint16,
-                        0
+                        static_cast<uint16_t>(0)
                     );
                     previous_zero = true;
                 }
@@ -182,11 +180,11 @@ class TorqueModule final : public Module
                 // if the class is configured to report changes in that direction
                 if (!cw && _custom_parameters.report_CCW)
                 {
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), kPrototypes::kOneUint16, signal);
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), signal);
                 }
                 else if (cw && _custom_parameters.report_CW)
                 {
-                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kCWTorque), kPrototypes::kOneUint16, signal);
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kCWTorque), signal);
                 }
 
                 previous_zero = false;

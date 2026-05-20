@@ -80,7 +80,7 @@ class ValveModule final : public Module
         bool SetCustomParameters() override
         {
             // Attempts to extract the received parameters
-            if (_communication.ExtractModuleParameters(_custom_parameters))
+            if (ExtractParameters(_custom_parameters))
             {
                 // If the instance is not configured to use the tone buzzer, ensures that the tone duration is set to 0.
                 // This is used to streamline the logic of some commands.
@@ -100,7 +100,7 @@ class ValveModule final : public Module
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // Pulse
                 case kModuleCommands::kSendPulse: Pulse(); return true;
@@ -203,7 +203,7 @@ class ValveModule final : public Module
         /// Opens the valve to deliver a precise volume of fluid or gas and then closes it.
         void Pulse()
         {
-            switch (execution_parameters.stage)
+            switch (get_command_stage())
             {
                 // Opens the valve
                 case 1:
@@ -308,7 +308,7 @@ class ValveModule final : public Module
                 return;
             }
 
-            switch (execution_parameters.stage)
+            switch (get_command_stage())
             {
                 // Activates the tone buzzer.
                 case 1:

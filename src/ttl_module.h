@@ -59,14 +59,14 @@ class TTLModule final : public Module
         /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
-            return _communication.ExtractModuleParameters(_custom_parameters);
+            return ExtractParameters(_custom_parameters);
         }
 
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // SendPulse
                 case kModuleCommands::kSendPulse: SendPulse(); return true;
@@ -138,7 +138,7 @@ class TTLModule final : public Module
                 return;
             }
 
-            switch (execution_parameters.stage)
+            switch (get_command_stage())
             {
                 // Initializes the pulse
                 case 1:
