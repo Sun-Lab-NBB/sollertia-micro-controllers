@@ -4,7 +4,7 @@
 # parsed and used by sphinx to render the static .html page via 'breathe' bridge.
 
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "sl-micro-controllers"
+PROJECT_NAME           = "sollertia-micro-controllers"
 OUTPUT_DIRECTORY       = docs/source/doxygen
 OUTPUT_LANGUAGE        = English
 INPUT                  = src/brake_module.h \

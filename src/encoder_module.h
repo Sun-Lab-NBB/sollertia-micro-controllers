@@ -84,7 +84,7 @@ class EncoderModule final : public Module
         /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
-            if (_communication.ExtractModuleParameters(_custom_parameters))
+            if (ExtractParameters(_custom_parameters))
             {
                 // Uses the delta_threshold to calculate positive and negative amortization. Amortization allows the
                 // overflow to store pulses in the non-reported direction, up to the delta_threshold limit. This is
@@ -104,7 +104,7 @@ class EncoderModule final : public Module
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // ReadEncoder
                 case kModuleCommands::kCheckState: ReadEncoder(); return true;
@@ -138,8 +138,7 @@ class EncoderModule final : public Module
             // Notifies the PC about the initial sensor state.
             SendData(
                 static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW),  // Direction is not relevant for 0-value.
-                kPrototypes::kOneUint32,
-                0
+                static_cast<uint32_t>(0)
             );
 
             return true;
@@ -211,7 +210,7 @@ class EncoderModule final : public Module
             // Displacement to the PC. Only reports displacements that are above the delta threshold.
             if (_overflow < 0 && delta > _custom_parameters.delta_threshold)
             {
-                SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW), kPrototypes::kOneUint32, delta);
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW), delta);
                 _overflow = 0;  // Resets the overflow, as all tracked pulses have been 'consumed' and sent to the PC.
             }
 
@@ -219,7 +218,7 @@ class EncoderModule final : public Module
             // Same as above, if the delta is greater than or equal to the readout threshold, sends the data to the PC.
             else if (_overflow > 0 && delta > _custom_parameters.delta_threshold)
             {
-                SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCCW), kPrototypes::kOneUint32, delta);
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCCW), delta);
                 _overflow = 0;  // Resets the overflow, as all tracked pulses have been 'consumed' and sent to the PC.
             }
 
@@ -267,11 +266,7 @@ class EncoderModule final : public Module
             const uint32_t average_ppr = (pprs + 10 / 2) / 10;
 
             // Sends the average PPR count to the PC.
-            SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kPPR),
-                kPrototypes::kOneUint32,
-                average_ppr
-            );
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kPPR), average_ppr);
 
             // Completes the command execution
             CompleteCommand();

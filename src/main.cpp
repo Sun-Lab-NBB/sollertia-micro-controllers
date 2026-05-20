@@ -3,10 +3,10 @@
 // Teensy 4.1 is connected to the host-PC at the same time.
 
 // The microcontrollers assembled and configured as part of this project are designed to work with the Python
-// interfaces available from the sl-experiment project: https://github.com/Sun-Lab-NBB/sl-experiment.
-// See https://github.com/Sun-Lab-NBB/sl-micro-controllers for more details on assembling the hardware and
+// interfaces available from the sollertia-experiment project: https://github.com/Sun-Lab-NBB/sollertia-experiment.
+// See https://github.com/Sun-Lab-NBB/sollertia-micro-controllers for more details on assembling the hardware and
 // installing the project.
-// API documentation: https://sl-micro-controllers-api-docs.netlify.app/.
+// API documentation: https://sollertia-micro-controllers-api-docs.netlify.app/.
 // Author: Ivan Kondratyev (Inkaros).
 
 // Dependencies

@@ -49,14 +49,14 @@ class LickModule final : public Module
         /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
-            return _communication.ExtractModuleParameters(_custom_parameters);
+            return ExtractParameters(_custom_parameters);
         }
 
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
             // Depending on the currently active command, executes the necessary logic.
-            switch (static_cast<kModuleCommands>(GetActiveCommand()))
+            switch (static_cast<kModuleCommands>(get_active_command()))
             {
                 // CheckState
                 case kModuleCommands::kCheckState: CheckState(); return true;
@@ -78,7 +78,7 @@ class LickModule final : public Module
             _custom_parameters.average_pool_size = 0;    // Better to have at 0 because Teensy already does this
 
             // Notifies the PC about the initial sensor state.
-            SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), kPrototypes::kOneUint16, 0);
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), static_cast<uint16_t>(0));
 
             return true;
         }
@@ -123,7 +123,7 @@ class LickModule final : public Module
             // If the signal is above the threshold, sends it to the PC
             if (signal >= _custom_parameters.signal_threshold)
             {
-                SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), kPrototypes::kOneUint16, signal);
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), signal);
                 previous_zero = false;
             }
 
@@ -133,8 +133,7 @@ class LickModule final : public Module
             {
                 SendData(
                     static_cast<uint8_t>(kCustomStatusCodes::kChanged),
-                    kPrototypes::kOneUint16,
-                    0
+                    static_cast<uint16_t>(0)
                 );
                 previous_zero = true;
             }
