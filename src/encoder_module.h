@@ -11,8 +11,8 @@
 #ifndef AXMC_ENCODER_MODULE_H
 #define AXMC_ENCODER_MODULE_H
 
-// Note, this definition has to precede Encoder.h inclusion. This increases the resolution of the encoder, but
-// interferes with any other library that makes use of AttachInterrupt() function.
+// This definition must precede Encoder.h inclusion. It increases the resolution of the encoder, but interferes with
+// any other library that makes use of AttachInterrupt().
 #define ENCODER_USE_INTERRUPTS
 
 #include <Arduino.h>
@@ -37,12 +37,10 @@
 template <const uint8_t kPinA, const uint8_t kPinB, const uint8_t kPinX, const bool kInvertDirection = false>
 class EncoderModule final : public Module
 {
-        // Ensures that the encoder pins are different.
         static_assert(kPinA != kPinB, "EncoderModule PinA and PinB cannot be the same!");
         static_assert(kPinA != kPinX, "EncoderModule PinA and PinX cannot be the same!");
         static_assert(kPinB != kPinX, "EncoderModule PinB and PinX cannot be the same!");
 
-        // Also ensures that encoder pins do not interfere with LED pin.
         static_assert(
             kPinA != LED_BUILTIN,
             "The LED-connected pin is reserved for LED manipulation. Select a different Channel A pin for the "
@@ -60,7 +58,7 @@ class EncoderModule final : public Module
         );
 
     public:
-        ///Defines the codes used by each module instance to communicate its runtime state to the PC.
+        /// Defines the codes used by each module instance to communicate its runtime state to the PC.
         enum class kCustomStatusCodes : uint8_t
         {
             kRotatedCCW = 51,  ///< The encoder was rotated in the counterclockwise (CCW) direction.
@@ -81,18 +79,18 @@ class EncoderModule final : public Module
             Module(module_type, module_id, communication)
         {}
 
-        /// Overwrites the module's runtime parameters structure with the data received from the PC.
+        /**
+         * @brief Overwrites the module's runtime parameters structure with the data received from the PC.
+         *
+         * @details Derives positive and negative amortization caps from delta_threshold. Amortization permits the
+         * overflow accumulator to store pulses in the non-reported direction up to the threshold, suppressing small
+         * jitter (for example, a locked running wheel) so that opposing micro-motions cancel out instead of
+         * accumulating into a spurious directional event.
+         */
         bool SetCustomParameters() override
         {
             if (ExtractParameters(_custom_parameters))
             {
-                // Uses the delta_threshold to calculate positive and negative amortization. Amortization allows the
-                // overflow to store pulses in the non-reported direction, up to the delta_threshold limit. This is
-                // used to counter (amortize) small, insignificant movements. For example, if the running wheel
-                // is locked, it may still move slightly in either direction. Without amortization, the overflow
-                // eventually accumulates small forward jitters and erroneously report forward movement. With
-                // amortization, the positive movement is likely to be counteracted by negative movement, resulting in
-                // a net 0 movement.
                 _positive_amortization = static_cast<int32_t>(_custom_parameters.delta_threshold);
                 _negative_amortization = -_positive_amortization;
                 return true;
@@ -103,16 +101,15 @@ class EncoderModule final : public Module
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
-            // Depending on the currently active command, executes the necessary logic.
             switch (static_cast<kModuleCommands>(get_active_command()))
             {
-                // ReadEncoder
+                // Reports rotation accumulated since the previous check.
                 case kModuleCommands::kCheckState: ReadEncoder(); return true;
-                // ResetEncoder
+                // Resets the pulse counter to 0.
                 case kModuleCommands::kReset: ResetEncoder(); return true;
-                // GetPPR
+                // Estimates the encoder's pulses-per-revolution.
                 case kModuleCommands::kGetPPR: GetPPR(); return true;
-                // Unrecognized command
+                // Unrecognized command.
                 default: return false;
             }
         }
@@ -120,24 +117,21 @@ class EncoderModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            // Since the wrapped Encoder class does not manage the Index pin, configures it as an input pin.
+            // The wrapped Encoder class does not manage the Index pin, so configure it explicitly as an input.
             pinMode(kPinX, INPUT);
 
-            // Resets the encoder's pulse counter. The hardware is statically configured during Encoder class
-            // instantiation.
+            // The Encoder's quadrature pins are statically configured during Encoder construction.
             _encoder.write(0);
 
-            // Resets the overflow tracker
             _overflow = 0;
 
-            // Resets the custom_parameters structure fields to their default values.
-            _custom_parameters.report_CCW      = true;
-            _custom_parameters.report_CW       = true;
+            _custom_parameters.report_ccw      = true;
+            _custom_parameters.report_cw       = true;
             _custom_parameters.delta_threshold = 15;
 
-            // Notifies the PC about the initial sensor state.
+            // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
             SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW),  // Direction is not relevant for 0-value.
+                static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW),
                 static_cast<uint32_t>(0)
             );
 
@@ -150,17 +144,18 @@ class EncoderModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                bool report_CCW          = true;  ///< Determines whether to report rotation in the CCW direction.
-                bool report_CW           = true;  ///< Determines whether to report rotation in the CW direction.
+                bool report_ccw          = true;  ///< Determines whether to report rotation in the CCW direction.
+                bool report_cw           = true;  ///< Determines whether to report rotation in the CW direction.
                 uint32_t delta_threshold = 15;    ///< The minimum displacement change (delta) for reporting rotation.
         } PACKED_STRUCT _custom_parameters;
-
-        /// The encoder class that monitors the encoder's rotation.
-        Encoder _encoder = Encoder(kPinA, kPinB);  // HAS to be initialized statically or the runtime crashes!
 
         /// Stores the multiplier used to optionally invert the pulse counter sign to virtually flip the direction of
         /// encoder readouts.
         static constexpr int32_t kMultiplier = kInvertDirection ? -1 : 1;  // NOLINT(*-dynamic-static-initializers)
+
+        /// The encoder class that monitors the encoder's rotation. Must be initialized statically; deferred
+        /// initialization causes a runtime crash.
+        Encoder _encoder = Encoder(kPinA, kPinB);
 
         /// Accumulates insignificant encoder readouts to be reused during future encoder state evaluation calls.
         int32_t _overflow = 0;
@@ -177,52 +172,42 @@ class EncoderModule final : public Module
         /// the PC if it is significantly different from the previous readout.
         void ReadEncoder()
         {
-            // Retrieves and, if necessary, flips the direction of the displacement (rotation) recorded by the encoder.
             const int32_t new_motion = _encoder.readAndReset() * kMultiplier;
 
-            // If the encoder has not moved since the last call to this method, returns without further processing.
             if (new_motion == 0)
             {
                 CompleteCommand();
                 return;
             }
 
-            // Combines the new motion with the accumulated motion stored in the overflow tracker.
             _overflow += new_motion;
 
-            if (new_motion < 0 && !_custom_parameters.report_CW)
+            if (new_motion < 0 && !_custom_parameters.report_cw)
             {
-                // Caps the accumulated CW motion (negative) to the amortization threshold when not reporting CW
-                // direction.
+                // Caps the accumulated CW motion (negative) to the amortization threshold when CW reporting is off.
                 _overflow = max(_overflow, _negative_amortization);
             }
-            else if (new_motion > 0 && !_custom_parameters.report_CCW)
+            else if (new_motion > 0 && !_custom_parameters.report_ccw)
             {
-                /// Caps the accumulated CCW motion (positive) to the amortization threshold when not reporting CCW
-                // direction.
+                // Caps the accumulated CCW motion (positive) to the amortization threshold when CCW reporting is off.
                 _overflow = min(_overflow, _positive_amortization);
             }
 
-            // Converts the pulse count delta to an absolute value for the threshold checking below.
-            auto delta = static_cast<uint32_t>(abs(_overflow));
+            const auto delta = static_cast<uint32_t>(abs(_overflow));
 
-            // Uses the direction (sign) of the displacement to determine the event code to use when reporting the
-            // Displacement to the PC. Only reports displacements that are above the delta threshold.
+            // Negative overflow encodes CW displacement; positive overflow encodes CCW. Only reports magnitudes that
+            // exceed the configured delta threshold, then drains the accumulator.
             if (_overflow < 0 && delta > _custom_parameters.delta_threshold)
             {
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW), delta);
-                _overflow = 0;  // Resets the overflow, as all tracked pulses have been 'consumed' and sent to the PC.
+                _overflow = 0;
             }
-
-            // If the value is positive, this is interpreted as the CCW movement direction.
-            // Same as above, if the delta is greater than or equal to the readout threshold, sends the data to the PC.
             else if (_overflow > 0 && delta > _custom_parameters.delta_threshold)
             {
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCCW), delta);
-                _overflow = 0;  // Resets the overflow, as all tracked pulses have been 'consumed' and sent to the PC.
+                _overflow = 0;
             }
 
-            // Completes the command execution
             CompleteCommand();
         }
 
@@ -233,42 +218,41 @@ class EncoderModule final : public Module
             CompleteCommand();
         }
 
-        /// Estimates the Pulse-Per-Revolution (PPR) value of the encoder by using the index pin to precisely measure
-        /// the number of pulses emitted during the full (360-degree) encoder rotation.
+        /**
+         * @brief Estimates the Pulse-Per-Revolution (PPR) value of the encoder by using the index pin to precisely
+         * measure the number of pulses emitted during a full (360-degree) encoder rotation.
+         *
+         * @warning Blocks the runtime in-place. The method spins waiting on the index pin and delays between rotations.
+         * Intended only for offline calibration, never during an active behavior session.
+         */
         void GetPPR()
         {
-            // First, establishes the measurement baseline. Since the algorithm does not know the current position of
-            // the encoder, waits until the index pin is triggered. This is used to establish the baseline for tracking
-            // the pulses per rotation.
+            // Waits for the first index-pin trigger to establish the rotation baseline before counting begins.
             while (!digitalReadFast(kPinX))
             {
             }
-            _encoder.write(0);  // Resets the pulse tracker to 0
+            _encoder.write(0);
 
-            // Measures 10 full rotations (indicated by index pin pulses). Resets the pulse tracker to 0 at each
-            // measurement and does not care about the motion direction.
-            uint32_t pprs = 0;
-            for (uint8_t i = 0; i < 10; ++i)
+            // Measures 10 full rotations (indicated by index pin pulses). Resets the pulse tracker at each measurement
+            // and ignores the rotation direction.
+            uint32_t total_pulses = 0;
+            for (uint8_t rotation_index = 0; rotation_index < 10; ++rotation_index)
             {
-                // Delays for 100 milliseconds to ensure the object spins past the range of index pin trigger
+                // Delays long enough for the index-pin trigger window to elapse before the next rotation is measured.
                 delay(100);
 
-                // Blocks until the index pin is triggered.
                 while (!digitalReadFast(kPinX))
                 {
                 }
 
-                // Accumulates the pulse counter into the summed value and reset the encoder each call.
-                pprs += abs(_encoder.readAndReset());
+                total_pulses += abs(_encoder.readAndReset());
             }
 
-            // Computes the average PPR by using half-up rounding to get a whole number.
-            const uint32_t average_ppr = (pprs + 10 / 2) / 10;
+            // Half-up integer division: (sum + 5) / 10.
+            const uint32_t average_ppr = (total_pulses + 10 / 2) / 10;
 
-            // Sends the average PPR count to the PC.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kPPR), average_ppr);
 
-            // Completes the command execution
             CompleteCommand();
         }
 };
