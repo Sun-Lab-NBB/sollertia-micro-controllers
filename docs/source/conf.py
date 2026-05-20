@@ -5,7 +5,7 @@ project = 'sollertia-micro-controllers'
 # noinspection PyShadowingBuiltins
 copyright = '2026, Sun (NeuroAI) lab'
 authors = ['Ivan Kondratyev']
-release = '3.0.0'
+release = '4.0.0'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
