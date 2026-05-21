@@ -44,6 +44,7 @@ ___
 - [Per-Target Configuration](#per-target-configuration)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
+- [AI-Assisted Development](#ai-assisted-development)
 - [Versioning](#versioning)
 - [Authors](#authors)
 - [License](#license)
@@ -122,6 +123,29 @@ ___
 
 See the [API documentation](https://sollertia-micro-controllers-api-docs.netlify.app/) for the detailed description of
 the methods and classes exposed by this project.
+
+___
+
+## AI-Assisted Development
+
+Claude Code skills and AI development assets for this project are distributed through two marketplaces:
+
+- [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace: Provides the firmware-aware Sollertia
+  experiment-pipeline skills via the **experiment** plugin. The most relevant skills for this firmware are
+  `/microcontroller-interface` (Sollertia binding contract, calibration field naming, version-bump rule),
+  `/modifying-mesoscope-vr-system` (entry router for hardware changes that span firmware and host-PC binding),
+  `/pipeline` (end-to-end lifecycle orchestration), and `/acquisition-system-setup` (post-flash hardware
+  verification). Install this plugin to make these workflow skills available to compatible AI coding agents.
+- [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace: Provides the low-level firmware module mechanics
+  via the **microcontroller** plugin (`/firmware-module` for `Module` subclass implementation), the host-PC
+  communication side via the **communication** plugin (`/microcontroller-interface` for `ModuleInterface` wiring,
+  `/microcontroller-setup` for discovery and MQTT verification), and shared development skills that enforce Sun Lab
+  coding conventions (C++ style, README style, commit messages, Sphinx documentation, tox configuration) and
+  general-purpose codebase exploration tools via the **automation** plugin.
+
+Install both marketplace plugins to make all associated skills and development tools available to compatible AI
+coding agents. See [CLAUDE.md](CLAUDE.md) for the full session-start workflow and the canonical reading order when
+adding or modifying a firmware module.
 
 ___
 

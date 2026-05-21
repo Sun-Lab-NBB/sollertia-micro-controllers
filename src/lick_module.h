@@ -72,7 +72,7 @@ class LickModule final : public Module
             // Assumes 12-bit ADC resolution.
             _custom_parameters.signal_threshold  = 300;  // Just above the typical noise floor.
             _custom_parameters.delta_threshold   = 300;  // At least half of the minimal signal_threshold.
-            _custom_parameters.average_pool_size = 0;    // 0 disables host-side averaging; the Teensy already averages.
+            _custom_parameters.average_pool_size = 0;    // Disables software averaging, but not ADC hardware averaging.
 
             // Notifies the PC about the initial sensor state.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), static_cast<uint16_t>(0));
