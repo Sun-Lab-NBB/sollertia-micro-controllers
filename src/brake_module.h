@@ -22,7 +22,6 @@
 template <const uint8_t kPin, const bool kNormallyEngaged, const bool kStartEngaged = true>
 class BrakeModule final : public Module
 {
-        // Ensures that the output pin does not interfere with the LED pin.
         static_assert(
             kPin != LED_BUILTIN,
             "The LED-connected pin is reserved for LED manipulation. Select a different pin for the BrakeModule "
@@ -57,31 +56,29 @@ class BrakeModule final : public Module
         {
             if (ExtractParameters(_custom_parameters))
             {
-                // Adjusts the PWM value to account for whether the brake is normally engaged. This ensures that the
-                // strength of 255 means the brake is fully engaged.
-                uint8_t value = _custom_parameters.braking_strength;
-                if (kNormallyEngaged) value = 255 - value;
-                _custom_parameters.braking_strength = value;
-                return true;  // Extraction (and adjustment) succeeded.
+                // Inverts the PWM value when the brake is normally engaged, so that strength 255 always means the brake
+                // is fully engaged regardless of the relay's idle state.
+                if (kNormallyEngaged)
+                    _custom_parameters.braking_strength = 255 - _custom_parameters.braking_strength;
+                return true;
             }
-            return false;  // Returns false if the parameter extraction fails
+            return false;
         }
 
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
-            // Depending on the currently active command, executes the necessary logic.
             switch (static_cast<kModuleCommands>(get_active_command()))
             {
-                // EnableBrake
+                // Engages the brake at maximum strength.
                 case kModuleCommands::kToggleOn: EnableBrake(); return true;
-                // DisableBrake
+                // Disengages the brake.
                 case kModuleCommands::kToggleOff: DisableBrake(); return true;
-                // SetBrakingPower
+                // Engages the brake at the requested non-maximal strength via PWM.
                 case kModuleCommands::kSetBrakingPower: SetBrakingPower(); return true;
-                // SendPulse
+                // Briefly engages the brake at maximum strength for the configured pulse duration.
                 case kModuleCommands::kSendPulse: SendPulse(); return true;
-                // Unrecognized command
+                // Unrecognized command.
                 default: return false;
             }
         }
@@ -89,24 +86,21 @@ class BrakeModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            // Sets pin mode to OUTPUT
             pinModeFast(kPin, OUTPUT);
 
-            // Based on the requested initial brake state and the configuration of the brake (normally engaged or not),
-            // either engages or disengages the brake following setup.
+            // Drives the brake into the configured initial state, accounting for whether the relay is normally engaged.
             if (kStartEngaged)
             {
-                digitalWriteFast(kPin, kEngage);  // Ensures the brake is engaged.
+                digitalWriteFast(kPin, kEngage);
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kEngaged));
             }
             else
             {
-                digitalWriteFast(kPin, kDisengage);  // Ensures the brake is disengaged.
+                digitalWriteFast(kPin, kDisengage);
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
             }
 
-            // Resets the custom_parameters structure fields to their default values.
-            _custom_parameters.braking_strength = 128;      //  50% braking strength
+            _custom_parameters.braking_strength = 128;      // 50% braking strength.
             _custom_parameters.pulse_duration   = 1000000;  // 1000000 microseconds == 1 second.
 
             return true;
@@ -147,8 +141,7 @@ class BrakeModule final : public Module
         /// Engages the brake at the specified strength level.
         void SetBrakingPower()
         {
-            // Uses AnalogWrite to make the pin output a square wave pulse with the desired duty cycle (PWM). This
-            // results in the brake being applied a certain proportion of time, producing the desired braking power.
+            // Drives the pin with a PWM square wave so the brake is engaged for the configured duty-cycle fraction.
             analogWrite(kPin, _custom_parameters.braking_strength);
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kVariable));
             CompleteCommand();

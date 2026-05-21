@@ -20,7 +20,6 @@
 template <const uint8_t kPin>
 class LickModule final : public Module
 {
-        // Ensures that the pin does not interfere with the LED pin.
         static_assert(
             kPin != LED_BUILTIN,
             "The LED-connected pin is reserved for LED manipulation. Select a different pin for the "
@@ -28,7 +27,6 @@ class LickModule final : public Module
         );
 
     public:
-
         /// Defines the codes used by each module instance to communicate its runtime state to the PC.
         enum class kCustomStatusCodes : uint8_t
         {
@@ -55,12 +53,11 @@ class LickModule final : public Module
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
-            // Depending on the currently active command, executes the necessary logic.
             switch (static_cast<kModuleCommands>(get_active_command()))
             {
-                // CheckState
+                // Reports lick-sensor voltage when it changes significantly.
                 case kModuleCommands::kCheckState: CheckState(); return true;
-                // Unrecognized command
+                // Unrecognized command.
                 default: return false;
             }
         }
@@ -68,14 +65,14 @@ class LickModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            // Configures the input pin. Critically, uses the pull-down mode, as the sensor is expected to spend most
-            // of its runtime in an uncompleted circuit state, so the pin must be pulled to 0.
+            // Pull-down mode: the sensor spends most of its runtime in an uncompleted-circuit state, so the pin must
+            // be pulled to 0 at rest.
             pinModeFast(kPin, INPUT_PULLDOWN);
 
-            // Resets the custom_parameters structure fields to their default values. Assumes 12-bit ADC resolution.
-            _custom_parameters.signal_threshold  = 300;  // Ideally should be just high enough to filter out noise
-            _custom_parameters.delta_threshold   = 300;  // Ideally should be at least half of the minimal threshold
-            _custom_parameters.average_pool_size = 0;    // Better to have at 0 because Teensy already does this
+            // Assumes 12-bit ADC resolution.
+            _custom_parameters.signal_threshold  = 300;  // Just above the typical noise floor.
+            _custom_parameters.delta_threshold   = 300;  // At least half of the minimal signal_threshold.
+            _custom_parameters.average_pool_size = 0;    // 0 disables host-side averaging; the Teensy already averages.
 
             // Notifies the PC about the initial sensor state.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), static_cast<uint16_t>(0));
@@ -98,37 +95,32 @@ class LickModule final : public Module
         /// different from the previous readout.
         void CheckState()
         {
-            // Stores the previous readout of the analog pin.
+            // A zero-baseline message is emitted during SetupModule(), so the initial previous_zero is true.
             static uint16_t previous_readout = 0;
+            static bool previous_zero        = true;
 
-            // Tracks whether the previous message sent to the PC included a zero-signal value.
-            static bool previous_zero = true;  // A zero-message is sent at class initialization.
-
-            // Reads the current voltage level across the sensor's circuitry.
             const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
 
-            // Calculates the absolute difference between the current readout and the previous readout.
             const auto delta =
                 static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
 
-            // Prevents reporting signals that are not significantly different from the previous readout value.
+            // Suppresses readouts that are not significantly different from the previous value.
             if (delta <= _custom_parameters.delta_threshold)
             {
                 CompleteCommand();
                 return;
             }
 
-            previous_readout = signal;  // Overwrites the previous readout with the current signal
+            previous_readout = signal;
 
-            // If the signal is above the threshold, sends it to the PC
             if (signal >= _custom_parameters.signal_threshold)
             {
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), signal);
                 previous_zero = false;
             }
 
-            // If the signal is below the threshold and the previously reported signal was not zero, pulls the signal
-            // to zero and reports it to the PC.
+            // Sub-threshold signal: emits a single zero-pull message if the previously reported value was not already
+            // zero, to mark the end of an above-threshold event without spamming the PC.
             else if (!previous_zero)
             {
                 SendData(
@@ -138,7 +130,6 @@ class LickModule final : public Module
                 previous_zero = true;
             }
 
-            // Completes command execution
             CompleteCommand();
         }
 };

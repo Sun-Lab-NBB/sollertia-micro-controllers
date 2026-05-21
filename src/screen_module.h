@@ -5,8 +5,8 @@
  * Virtual Reality system.
  */
 
-#ifndef SCREEN_MODULE_H
-#define SCREEN_MODULE_H
+#ifndef AXMC_SCREEN_MODULE_H
+#define AXMC_SCREEN_MODULE_H
 
 #include <Arduino.h>
 #include <digitalWriteFast.h>
@@ -20,9 +20,7 @@
  * @tparam kNormallyClosed determines whether the FET relays used to control the screens' power are closed
  * (On / conducting) or opened (Off / not conducting) when unpowered.
  */
-template <
-    const uint8_t kPin,
-    const bool kNormallyClosed = false>
+template <const uint8_t kPin, const bool kNormallyClosed = false>
 class ScreenModule final : public Module
 {
         static_assert(
@@ -32,7 +30,6 @@ class ScreenModule final : public Module
         );
 
     public:
-
         /// Defines the codes used by each module instance to communicate its runtime state to the PC.
         enum class kCustomStatusCodes : uint8_t
         {
@@ -43,7 +40,7 @@ class ScreenModule final : public Module
         /// Defines the codes for the commands supported by the module's instance.
         enum class kModuleCommands : uint8_t
         {
-            kToggle = 1,  ///< Pulses the screens' power board FET gates simulate pressing the screens' power button.
+            kToggle = 1,  ///< Pulses the screens' power board FET gates to simulate pressing the screens' power button.
         };
 
         /// Initializes the base Module class.
@@ -60,12 +57,11 @@ class ScreenModule final : public Module
         /// Resolves and executes the currently active command.
         bool RunActiveCommand() override
         {
-            // Depending on the currently active command, executes the necessary logic.
             switch (static_cast<kModuleCommands>(get_active_command()))
             {
-                // Toggles screen power state
+                // Simulates a button press on the screens' power board.
                 case kModuleCommands::kToggle: Toggle(); return true;
-                // Unrecognized command
+                // Unrecognized command.
                 default: return false;
             }
         }
@@ -73,16 +69,13 @@ class ScreenModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            // Sets the control pin to output mode.
             pinModeFast(kPin, OUTPUT);
 
-            // Ensures the logic gates are disabled at startup
             digitalWriteFast(kPin, kOff);
 
             // Notifies the PC about the initial state of the FET gates.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kOff));
 
-            // Resets the custom_parameters structure fields to their default values.
             _custom_parameters.pulse_duration = 1000000;  // 1000000 microseconds == 1 second.
 
             return true;
@@ -111,21 +104,20 @@ class ScreenModule final : public Module
         {
             switch (get_command_stage())
             {
-                // Simulates pressing the screens' power button
+                // Simulates pressing the screens' power button.
                 case 1:
                     digitalWriteFast(kPin, kOn);
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOn));
                     AdvanceCommandStage();
                     return;
 
-                // Simulates holding the button down. This allows the power boards logic to debounce and detect the
-                // signal.
+                // Simulates holding the button down so the power board's debounce logic can detect the press.
                 case 2:
                     if (!WaitForMicros(_custom_parameters.pulse_duration)) return;
                     AdvanceCommandStage();
                     return;
 
-                // Simulates releasing the screens' power button
+                // Simulates releasing the screens' power button.
                 case 3:
                     digitalWriteFast(kPin, kOff);
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kOff));
@@ -137,4 +129,4 @@ class ScreenModule final : public Module
         }
 };
 
-#endif  //SCREEN_MODULE_H
+#endif  //AXMC_SCREEN_MODULE_H

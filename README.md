@@ -3,9 +3,12 @@
 Aggregates the firmware and hardware documentation for all Ataraxis Micro Controllers (AXMCs) used by Sollertia
 platform data acquisition systems.
 
-![c++](https://img.shields.io/badge/C++-00599C?style=flat-square&logo=C%2B%2B&logoColor=white)
-![license](https://img.shields.io/badge/license-Apache_2.0-blue)
----
+![PlatformIO](https://img.shields.io/badge/PlatformIO-orange?logo=platformio&logoColor=white&labelColor=grey)
+![C++](https://img.shields.io/badge/C%2B%2B-blue?logo=cplusplus&logoColor=white&labelColor=grey)
+![Arduino](https://img.shields.io/badge/Arduino-blue?logo=Arduino&logoColor=white&labelColor=grey)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+___
 
 ## Detailed Description
 
@@ -31,13 +34,14 @@ to be interfaced through the bindings available from the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library, which is a core dependency of every
 Sollertia platform acquisition system.
 
----
+___
 
 ## Table of Contents
 
 - [Dependencies](#dependencies)
 - [Hardware Assembly](#hardware-assembly)
 - [Software Installation](#software-installation)
+- [Per-Target Configuration](#per-target-configuration)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
 - [Versioning](#versioning)
@@ -45,7 +49,7 @@ Sollertia platform acquisition system.
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
----
+___
 
 ## Dependencies
 
@@ -60,7 +64,7 @@ These dependencies are automatically resolved whenever the project is installed 
 - [ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller).
 - [ataraxis-transport-layer-mc](https://github.com/Sun-Lab-NBB/ataraxis-transport-layer-mc).
 
----
+___
 
 ## Hardware Assembly
 
@@ -68,12 +72,12 @@ To assemble the microcontroller hardware, consult the
 [schematics and instructions](https://drive.google.com/drive/folders/12gDWwI_88usMgt7qVo7e83FKYo45KZwz?usp=drive_link)
 reflecting the latest state of the Sollertia platform microcontroller hardware.
 
-Note, the provided link only covers the microcontrollers and does not discuss the assembly of other
+***Note,*** the provided link only covers the microcontrollers and does not discuss the assembly of other
 experiment-facilitating devices used by each data acquisition system. Consult the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library for details on assembling the other
 Sollertia platform data acquisition system components.
 
----
+___
 
 ## Software Installation
 
@@ -90,40 +94,56 @@ Sollertia platform data acquisition system components.
 6. Repeat steps 4 and 5 until all microcontrollers are configured.
 7. Connect all microcontrollers to the PC that will manage the data acquisition runtime (the main data-acquisition PC).
 
----
+___
+
+## Per-Target Configuration
+
+The firmware exposes a small set of compile-time identifiers that the companion host-PC runtime
+([sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment)) must match. The defaults
+shipped with this project are:
+
+- **Controller IDs** (set in [main.cpp](src/main.cpp)): `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`.
+- **Keepalive interval**: `500` ms. The Kernel expects the host PC to send a keepalive message at least this often;
+  if it does not, the microcontroller resets to abort runtime.
+
+Adjust these values directly in `main.cpp` if a deployment needs different IDs or a different keepalive cadence,
+and make sure the host-PC configuration is updated to match.
+
+___
 
 ## Usage
 
 Once the microcontrollers are assembled, configured, and connected to the main data acquisition PC, they are
 accessed via the [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library.
 
----
+___
 
 ## API Documentation
 
 See the [API documentation](https://sollertia-micro-controllers-api-docs.netlify.app/) for the detailed description of
 the methods and classes exposed by this project.
 
----
+___
 
 ## Versioning
 
 This project uses [semantic versioning](https://semver.org/). See the
-[tags on this repository](https://github.com/Sun-Lab-NBB/sollertia-micro-controllers/tags) for the available releases.
+[tags on this repository](https://github.com/Sun-Lab-NBB/sollertia-micro-controllers/tags) for the available project
+releases.
 
----
+___
 
 ## Authors
 
 - Ivan Kondratyev ([Inkaros](https://github.com/Inkaros))
 
----
+___
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0: see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2.0 License: see the [LICENSE](LICENSE) file for details.
 
----
+___
 
 ## Acknowledgments
 
@@ -131,4 +151,4 @@ This project is licensed under the Apache License, Version 2.0: see the [LICENSE
   development of this project.
 - The creators of all other dependencies and projects listed in the [platformio.ini](platformio.ini) file.
 
----
+___
