@@ -19,14 +19,16 @@ by the [ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro
 hardware modules consumed by Sollertia platform data acquisition systems and exposed to the host PC through the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) runtime.
 
-Currently, all Sollertia platform data acquisition systems can use up to three distinct classes of microcontrollers:
-AMC-ACTOR, AMC-SENSOR, and AMC-ENCODER. The Actor interfaces with the hardware modules that control the experiment
-environment, for example, to deliver water, lock the running wheel, and activate Virtual Reality screens. The Sensor
-monitors most data-acquisition devices, such as the torque sensor, lick sensor, and Mesoscope frame timestamp sensor.
-The Encoder uses hardware interrupt logic to monitor the animal's movement using a rotary encoder and, due to interrupt
-logic constraints, is segmented into its own class of microcontrollers. Using this combination of microcontrollers
-maximizes data acquisition speed while avoiding communication channel overloading. Typically, each acquisition system
-uses at most a single instance of each microcontroller type.
+The firmware is partitioned across microcontroller boards via preprocessor target macros in `main.cpp`; each board
+runs one firmware binary corresponding to one target. The current Mesoscope-VR acquisition system (the only consumer
+this project currently supports) uses three target classes: AMC-ACTOR, AMC-SENSOR, and AMC-ENCODER. The Actor
+interfaces with the hardware modules that control the experiment environment, for example, to deliver water, lock
+the running wheel, and activate Virtual Reality screens. The Sensor monitors most data-acquisition devices, such as
+the torque sensor, lick sensor, and Mesoscope frame timestamp sensor. The Encoder uses hardware interrupt logic to
+monitor the animal's movement using a rotary encoder and, due to interrupt logic constraints, is segmented into its
+own class of microcontrollers. This combination maximizes data acquisition speed while avoiding communication channel
+overloading. Future acquisition systems can define any other set of targets with any partitioning of the available
+modules across boards.
 
 This project contains both the schematics for assembling the microcontrollers used by the Sollertia platform and the
 firmware that runs on those microcontrollers. The hardware created and programmed as part of this project is designed
@@ -130,18 +132,24 @@ ___
 
 Claude Code skills and AI development assets for this project are distributed through two marketplaces:
 
-- [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace: Provides the firmware-aware Sollertia
-  experiment-pipeline skills via the **experiment** plugin. The most relevant skills for this firmware are
-  `/microcontroller-interface` (Sollertia binding contract, calibration field naming, version-bump rule),
-  `/modifying-mesoscope-vr-system` (entry router for hardware changes that span firmware and host-PC binding),
-  `/pipeline` (end-to-end lifecycle orchestration), and `/acquisition-system-setup` (post-flash hardware
-  verification). Install this plugin to make these workflow skills available to compatible AI coding agents.
+- [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace: Provides the firmware-aware Sollertia skills
+  via the **experiment** plugin. The most relevant skills for this firmware are:
+  - `/microcontroller-interface` — registry of paired firmware Module + Python `ModuleInterface` classes plus the
+    cross-side conventions and contract they share
+  - `/acquisition-system-design` — platform-general pattern for how a consuming acquisition system composes the
+    firmware's wrappers into binding classes and a system configuration
+  - `/mesoscope-vr` — current Mesoscope-VR consumer's hardware composition and configuration surface (the only
+    acquisition system this firmware currently feeds)
+  - `/mesoscope-vr-runtime` — Mesoscope-VR runtime behavior (state machine, training modes, CLI commands)
+  - `/zaber-interface` — Zaber motor interface mechanics (shared across acquisition systems)
+  - `/pipeline` — end-to-end Sollertia experiment lifecycle orchestration context
+  - `/acquisition-system-setup` — post-flash hardware enumeration and verification
 - [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace: Provides the low-level firmware module mechanics
-  via the **microcontroller** plugin (`/firmware-module` for `Module` subclass implementation), the host-PC
-  communication side via the **communication** plugin (`/microcontroller-interface` for `ModuleInterface` wiring,
-  `/microcontroller-setup` for discovery and MQTT verification), and shared development skills that enforce Sun Lab
-  coding conventions (C++ style, README style, commit messages, Sphinx documentation, tox configuration) and
-  general-purpose codebase exploration tools via the **automation** plugin.
+  via the **microcontroller** plugin (`/firmware-module` for the base `Module` subclass implementation), the
+  host-PC communication side via the **communication** plugin (`/microcontroller-interface` for the base
+  `ModuleInterface` API, `/microcontroller-setup` for discovery and MQTT verification), and shared development
+  skills that enforce Sun Lab coding conventions (C++ style, README style, commit messages, Sphinx documentation,
+  tox configuration) and general-purpose codebase exploration tools via the **automation** plugin.
 
 Install both marketplace plugins to make all associated skills and development tools available to compatible AI
 coding agents. See [CLAUDE.md](CLAUDE.md) for the full session-start workflow and the canonical reading order when
