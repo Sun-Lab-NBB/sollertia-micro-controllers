@@ -33,8 +33,8 @@ class ScreenModule final : public Module
         /// Defines the codes used by each module instance to communicate its runtime state to the PC.
         enum class kCustomStatusCodes : uint8_t
         {
-            kOn  = 51,  ///< The screen power board relay is receiving a HIGH signal.
-            kOff = 52,  ///< The screen power board relay is receiving a LOW signal.
+            kOn  = 51,  ///< The screen power board's button-press signal is asserted.
+            kOff = 52,  ///< The screen power board's button-press signal is released.
         };
 
         /// Defines the codes for the commands supported by the module's instance.
@@ -87,7 +87,7 @@ class ScreenModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration = 1000000;  ///< The time of the toggling pulse's HIGH phase, in microseconds.
+                uint32_t pulse_duration = 1000000;  ///< The time, in microseconds, the button-press signal is held.
         } PACKED_STRUCT _custom_parameters;
 
         /// Stores the digital signal that needs to be sent to the output pin to simulate pressing the screens' power
@@ -98,7 +98,7 @@ class ScreenModule final : public Module
         /// button.
         static constexpr bool kOff = kNormallyClosed ? HIGH : LOW;  // NOLINT(*-dynamic-static-initializers)
 
-        /// Sends a digital pulse through all output pins, using the preconfigured pulse_duration of microseconds, to
+        /// Sends a digital pulse through the output pin, using the preconfigured pulse_duration of microseconds, to
         /// simulate pressing and releasing the screens' power button.
         void Toggle()
         {
