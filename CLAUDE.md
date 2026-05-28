@@ -35,11 +35,11 @@ appropriate skill results in style violations that block release.
 This firmware depends on two ataraxis C++ libraries and is consumed by one Sollertia Python library. Local clones
 of all three typically live alongside this repository under `/home/cyberaxolotl/Desktop/GitHubRepos/`.
 
-| Library                       | Direction       | Role                                                                                                                                            |
-|-------------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ataraxis-micro-controller`   | Upstream        | Provides `Kernel`, `Communication`, `Module` base class                                                                                         |
-| `ataraxis-transport-layer-mc` | Upstream        | Bidirectional serial communication with CRC and COBS                                                                                            |
-| `sollertia-experiment`        | Downstream (PC) | Owns the host-PC `ModuleInterface` wrappers (system-agnostic, in `shared_components/module_interfaces.py`) and the per-acquisition-system binding classes and configuration dataclasses (currently only Mesoscope-VR in `mesoscope_vr/`) |
+| Library                       | Direction       | Role                                                                                                                                                                                                                                |
+|-------------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ataraxis-micro-controller`   | Upstream        | Provides `Kernel`, `Communication`, `Module` base class                                                                                                                                                                             |
+| `ataraxis-transport-layer-mc` | Upstream        | Bidirectional serial communication with CRC and COBS                                                                                                                                                                                |
+| `sollertia-experiment`        | Downstream (PC) | Owns the host-PC `ModuleInterface` wrappers (system-agnostic, in `cross_system/module_interfaces.py`) and the per-acquisition-system binding classes and configuration dataclasses (currently only Mesoscope-VR in `mesoscope_vr/`) |
 
 **Before writing code that interacts with a cross-referenced library, you MUST:**
 
@@ -81,27 +81,27 @@ All skills below ship as part of the marketplace / plugin pair shown in the **Pl
 `ataraxis` for the first three plugins (`automation`, `microcontroller`, `communication`) and `sollertia` for the
 `experiment` plugin.
 
-| Skill                                      | Plugin            | Purpose                                                          |
-|--------------------------------------------|-------------------|------------------------------------------------------------------|
-| `/explore-codebase`                        | `automation`      | Perform in-depth codebase exploration at session start           |
-| `/cpp-style`                               | `automation`      | Apply Sun Lab C++ conventions (REQUIRED for C++ changes)         |
-| `/readme-style`                            | `automation`      | Apply Sun Lab README conventions (REQUIRED for README changes)   |
-| `/api-docs`                                | `automation`      | Apply Sun Lab Sphinx documentation conventions                   |
-| `/tox-config`                              | `automation`      | Apply Sun Lab tox.ini conventions                                |
-| `/commit`                                  | `automation`      | Draft Sun Lab style-compliant git commit messages                |
-| `/skill-design`                            | `automation`      | Generate, update, and verify skill files and this CLAUDE.md      |
-| `/audit-style`                             | `automation`      | Audit files against applicable style skill checklists            |
-| `/audit-facts`                             | `automation`      | Audit documentation against source code for factual accuracy     |
-| `microcontroller:firmware-module`          | `microcontroller` | Guide creation of custom hardware `Module` subclasses            |
-| `communication:microcontroller-interface`  | `communication`   | Write host-PC `ModuleInterface` code that consumes this firmware |
-| `communication:microcontroller-setup`      | `communication`   | Discover microcontrollers, verify MQTT, inspect manifests        |
-| `experiment:microcontroller-interface`     | `experiment`      | Registry of paired Module + Interface classes; slmc + sle conventions  |
-| `experiment:acquisition-system-design`     | `experiment`      | Platform-general pattern for binding-class + configuration composition  |
-| `experiment:mesoscope-vr`                  | `experiment`      | Current Mesoscope-VR hardware composition and configuration surface    |
-| `experiment:mesoscope-vr-runtime`          | `experiment`      | Mesoscope-VR runtime behavior (state machine, training modes, CLI)     |
-| `experiment:zaber-interface`               | `experiment`      | Zaber motor interface mechanics (shared across acquisition systems)    |
-| `experiment:pipeline`                      | `experiment`      | End-to-end Sollertia experiment lifecycle orchestration          |
-| `experiment:acquisition-system-setup`      | `experiment`      | Post-flash hardware enumeration and configuration verification   |
+| Skill                                     | Plugin            | Purpose                                                                |
+|-------------------------------------------|-------------------|------------------------------------------------------------------------|
+| `/explore-codebase`                       | `automation`      | Perform in-depth codebase exploration at session start                 |
+| `/cpp-style`                              | `automation`      | Apply Sun Lab C++ conventions (REQUIRED for C++ changes)               |
+| `/readme-style`                           | `automation`      | Apply Sun Lab README conventions (REQUIRED for README changes)         |
+| `/api-docs`                               | `automation`      | Apply Sun Lab Sphinx documentation conventions                         |
+| `/tox-config`                             | `automation`      | Apply Sun Lab tox.ini conventions                                      |
+| `/commit`                                 | `automation`      | Draft Sun Lab style-compliant git commit messages                      |
+| `/skill-design`                           | `automation`      | Generate, update, and verify skill files and this CLAUDE.md            |
+| `/audit-style`                            | `automation`      | Audit files against applicable style skill checklists                  |
+| `/audit-facts`                            | `automation`      | Audit documentation against source code for factual accuracy           |
+| `microcontroller:firmware-module`         | `microcontroller` | Guide creation of custom hardware `Module` subclasses                  |
+| `communication:microcontroller-interface` | `communication`   | Write host-PC `ModuleInterface` code that consumes this firmware       |
+| `communication:microcontroller-setup`     | `communication`   | Discover microcontrollers, verify MQTT, inspect manifests              |
+| `experiment:microcontroller-interface`    | `experiment`      | Registry of paired Module + Interface classes; slmc + sle conventions  |
+| `experiment:acquisition-system-design`    | `experiment`      | Platform-general pattern for binding-class + configuration composition |
+| `experiment:mesoscope-vr`                 | `experiment`      | Current Mesoscope-VR hardware composition and configuration surface    |
+| `experiment:mesoscope-vr-runtime`         | `experiment`      | Mesoscope-VR runtime behavior (state machine, training modes, CLI)     |
+| `experiment:zaber-interface`              | `experiment`      | Zaber motor interface mechanics (shared across acquisition systems)    |
+| `experiment:pipeline`                     | `experiment`      | End-to-end Sollertia experiment lifecycle orchestration                |
+| `experiment:acquisition-system-setup`     | `experiment`      | Post-flash hardware enumeration and configuration verification         |
 
 ***Note,*** the sollertia `experiment` plugin may be unavailable on hosts where the sollertia marketplace is not
 installed (the live `available-skills` list will not include any `experiment:*` entries). The source for each skill
@@ -111,7 +111,7 @@ form is not available.
 ## Downstream library integration
 
 This firmware lives on one end of a two-repository contract with `sollertia-experiment`, which owns the host-PC
-`ModuleInterface` wrappers (system-agnostic, in `src/sollertia_experiment/shared_components/module_interfaces.py`)
+`ModuleInterface` wrappers (system-agnostic, in `src/sollertia_experiment/cross_system/module_interfaces.py`)
 and the per-acquisition-system binding classes and configuration dataclasses. The current consumer is the
 Mesoscope-VR system; its binding classes and `MesoscopeMicroControllers` configuration dataclass live in
 `src/sollertia_experiment/mesoscope_vr/`.
@@ -125,10 +125,10 @@ interval, or per-target module layout MUST be synchronized with the correspondin
    `gh api repos/Sun-Lab-NBB/sollertia-experiment` to access the remote repository.
 
 2. **Review the corresponding implementation**: Read the host-PC `ModuleInterface` subclass in
-   `sollertia-experiment/src/sollertia_experiment/shared_components/module_interfaces.py` that consumes the firmware
+   `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py` that consumes the firmware
    module you are modifying, and the matching per-system calibration fields. For the current Mesoscope-VR consumer,
    the calibration lives in `MesoscopeMicroControllers`
-   (`sollertia-experiment/src/sollertia_experiment/mesoscope_vr/configuration.py`). Verify that both repositories
+   (`sollertia-experiment/src/sollertia_experiment/mesoscope_vr/system.py`). Verify that both repositories
    are currently in sync before making changes.
 
 3. **Plan synchronized changes**: Document what must change in each repository. Notify the user of the required
@@ -305,7 +305,7 @@ tox -e docs                      # Build Sphinx + Doxygen API documentation
 7. Bump the slmc version (git tag) and flash to the affected board(s).
 8. Hand off to sollertia-experiment for the host-PC side. The handoff splits in two:
    - **Python wrapper** (system-agnostic): author the new `ModuleInterface` subclass in
-     `sollertia-experiment/src/sollertia_experiment/shared_components/module_interfaces.py` following
+     `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py` following
      `experiment:microcontroller-interface`'s "sle Python wrapper conventions" section.
    - **Binding-class integration** (consumer-specific): for the current Mesoscope-VR consumer, hand off to
      `experiment:mesoscope-vr` to add calibration fields to `MesoscopeMicroControllers`, extend
@@ -316,9 +316,9 @@ tox -e docs                      # Build Sphinx + Doxygen API documentation
 
 1. Read the relevant header in `src/` to understand the current `CustomRuntimeParameters` and `kCustomStatusCodes`.
 2. Verify the corresponding host-PC `ModuleInterface` (in
-   `sollertia-experiment/src/sollertia_experiment/shared_components/module_interfaces.py`) and the consuming
+   `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py`) and the consuming
    system's calibration fields (for Mesoscope-VR: `MesoscopeMicroControllers` in
-   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/configuration.py`) before making changes.
+   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/system.py`) before making changes.
    Cross-repository drift is a runtime hazard.
 3. Make the firmware change, bump the slmc version, and coordinate companion changes via
    `experiment:microcontroller-interface` (wrapper-side) and the consumer's instance skill (binding-side; for

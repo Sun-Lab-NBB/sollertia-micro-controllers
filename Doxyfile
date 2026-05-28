@@ -5,6 +5,7 @@
 
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "sollertia-micro-controllers"
+PROJECT_NUMBER         = "4.0.0"
 OUTPUT_DIRECTORY       = docs/source/doxygen
 OUTPUT_LANGUAGE        = English
 INPUT                  = src/brake_module.h \

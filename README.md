@@ -14,8 +14,9 @@ ___
 
 This project is part of the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) AI-assisted scientific data
 acquisition and processing platform, built on the [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework and
-developed in the Sun (NeuroAI) lab at Cornell University. It specializes the general microcontroller framework provided
-by the [ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller) library into the concrete
+developed in the [Sun (NeuroAI) lab](https://neuroai.github.io/sunlab/) at Cornell University. It specializes the
+general microcontroller framework provided by the
+[ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller) library into the concrete
 hardware modules consumed by Sollertia platform data acquisition systems and exposed to the host PC through the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) runtime.
 
@@ -124,7 +125,7 @@ ___
 ## API Documentation
 
 See the [API documentation](https://sollertia-micro-controllers-api-docs.netlify.app/) for the detailed description of
-the methods and classes exposed by this project.
+the methods and classes exposed by components of this library.
 
 ___
 
