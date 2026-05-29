@@ -133,28 +133,24 @@ ___
 
 Claude Code skills and AI development assets for this project are distributed through two marketplaces:
 
-- [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace: Provides the firmware-aware Sollertia skills
-  via the **experiment** plugin. The most relevant skills for this firmware are:
-  - `/microcontroller-interface` — registry of paired firmware Module + Python `ModuleInterface` classes plus the
-    cross-side conventions and contract they share
-  - `/acquisition-system-design` — platform-general pattern for how a consuming acquisition system composes the
-    firmware's wrappers into binding classes and a system configuration
-  - `/mesoscope-vr` — current Mesoscope-VR consumer's hardware composition and configuration surface (the only
-    acquisition system this firmware currently feeds)
-  - `/mesoscope-vr-runtime` — Mesoscope-VR runtime behavior (state machine, training modes, CLI commands)
-  - `/zaber-interface` — Zaber motor interface mechanics (shared across acquisition systems)
-  - `/pipeline` — end-to-end Sollertia experiment lifecycle orchestration context
-  - `/acquisition-system-setup` — post-flash hardware enumeration and verification
-- [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace: Provides the low-level firmware module mechanics
-  via the **microcontroller** plugin (`/firmware-module` for the base `Module` subclass implementation), the
-  host-PC communication side via the **communication** plugin (`/microcontroller-interface` for the base
-  `ModuleInterface` API, `/microcontroller-setup` for discovery and MQTT verification), and shared development
-  skills that enforce Sun Lab coding conventions (C++ style, README style, commit messages, Sphinx documentation,
-  tox configuration) and general-purpose codebase exploration tools via the **automation** plugin.
+- [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace:
+  - **experiment** plugin — the firmware-aware `/microcontroller-interface` skill, a registry of the paired
+    firmware Module and host-PC `ModuleInterface` classes and the cross-side contract they share. This is the entry
+    point for any change that spans this firmware and its
+    [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) consumer, and it links out to the
+    ataraxis plugins below for the underlying mechanics. The host-PC interface and configuration skills it
+    references belong to the consumer and are documented there.
+- [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace:
+  - **microcontroller** plugin — the foundational C++ firmware mechanics via the `/firmware-module` skill (base
+    `Module` subclass implementation: template parameters, parameter structs, status and command codes, and
+    stage-based command execution).
+  - **automation** plugin — shared development skills that enforce Sollertia platform coding conventions (C++ style,
+    README style, commit messages, Sphinx documentation, tox configuration) and general-purpose codebase exploration
+    tools.
 
-Install both marketplace plugins to make all associated skills and development tools available to compatible AI
-coding agents. See [CLAUDE.md](CLAUDE.md) for the full session-start workflow and the canonical reading order when
-adding or modifying a firmware module.
+Install all three plugins to make the full skill set available to compatible AI coding agents. See
+[CLAUDE.md](CLAUDE.md) for the full session-start workflow and the canonical reading order when adding or modifying
+a firmware module.
 
 ___
 

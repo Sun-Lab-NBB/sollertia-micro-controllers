@@ -62,46 +62,33 @@ of all three typically live alongside this repository under `/home/cyberaxolotl/
 
 ## Available skills
 
-The sollertia marketplace ships an `experiment` plugin with skills that target this firmware directly via
-cross-plugin handoffs. The ataraxis marketplace ships several plugins used across all Sollertia repositories, of which
-the `microcontroller`, `communication`, and `automation` plugins are relevant to this firmware.
+The skills directly relevant to firmware work in this repository, and guaranteed to remain relevant regardless of
+which acquisition system consumes the firmware, are:
+
+| Skill                                  | Purpose                                                              |
+|----------------------------------------|----------------------------------------------------------------------|
+| `microcontroller:firmware-module`      | Base C++ `Module` subclass mechanics (ataraxis base template)        |
+| `experiment:microcontroller-interface` | Paired firmware Module + host-PC `ModuleInterface` contract registry |
+
+The Sollertia platform's development and style skills required for routine changes ship in the ataraxis marketplace's
+`automation` plugin; invoke them as directed by the "Session start behavior" and "Style guide compliance" sections
+above.
+
+Everything else this firmware touches lives on the consumer side. The sollertia marketplace's `experiment` plugin and
+the downstream [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) (sle) library own the
+host-PC interface wrappers, the acquisition-system binding classes, and the per-system configuration and runtime
+surface; the `experiment:microcontroller-interface` skill links out to the ataraxis `communication` plugin for the
+base host-PC `ModuleInterface` API. This consumer surface changes per acquisition system (Mesoscope-VR is the only
+current consumer), so this file does not enumerate it. When a change reaches the consumer side, inspect the
+`experiment` plugin's skills and the `sollertia-experiment` library to determine which are currently relevant.
 
 **Canonical reading order when adding or modifying a firmware module:**
-1. `experiment:microcontroller-interface` — Registry of paired Module + Interface classes; slmc + sle wrapper
-   conventions and the cross-side contract between them
-2. `microcontroller:firmware-module` — Base C++ Module subclass mechanics (ataraxis base template)
-3. `communication:microcontroller-interface` — Base host-PC ModuleInterface API (ataraxis base template)
-4. `experiment:acquisition-system-design` — Platform-general pattern for composing the wrapper layer into
-   binding classes + system configuration (read when the change touches the consumer's binding layer)
-5. `experiment:mesoscope-vr` — Current Mesoscope-VR consumer's hardware composition and configuration surface
-   (the only acquisition system slmc currently feeds; read when the change requires Mesoscope-VR-side updates)
-6. `communication:microcontroller-setup` — Post-flash hardware enumeration / verification
-
-All skills below ship as part of the marketplace / plugin pair shown in the **Plugin** column. The marketplace is
-`ataraxis` for the first three plugins (`automation`, `microcontroller`, `communication`) and `sollertia` for the
-`experiment` plugin.
-
-| Skill                                     | Plugin            | Purpose                                                                |
-|-------------------------------------------|-------------------|------------------------------------------------------------------------|
-| `/explore-codebase`                       | `automation`      | Perform in-depth codebase exploration at session start                 |
-| `/cpp-style`                              | `automation`      | Apply Sun Lab C++ conventions (REQUIRED for C++ changes)               |
-| `/readme-style`                           | `automation`      | Apply Sun Lab README conventions (REQUIRED for README changes)         |
-| `/api-docs`                               | `automation`      | Apply Sun Lab Sphinx documentation conventions                         |
-| `/tox-config`                             | `automation`      | Apply Sun Lab tox.ini conventions                                      |
-| `/commit`                                 | `automation`      | Draft Sun Lab style-compliant git commit messages                      |
-| `/skill-design`                           | `automation`      | Generate, update, and verify skill files and this CLAUDE.md            |
-| `/audit-style`                            | `automation`      | Audit files against applicable style skill checklists                  |
-| `/audit-facts`                            | `automation`      | Audit documentation against source code for factual accuracy           |
-| `microcontroller:firmware-module`         | `microcontroller` | Guide creation of custom hardware `Module` subclasses                  |
-| `communication:microcontroller-interface` | `communication`   | Write host-PC `ModuleInterface` code that consumes this firmware       |
-| `communication:microcontroller-setup`     | `communication`   | Discover microcontrollers, verify MQTT, inspect manifests              |
-| `experiment:microcontroller-interface`    | `experiment`      | Registry of paired Module + Interface classes; slmc + sle conventions  |
-| `experiment:acquisition-system-design`    | `experiment`      | Platform-general pattern for binding-class + configuration composition |
-| `experiment:mesoscope-vr`                 | `experiment`      | Current Mesoscope-VR hardware composition and configuration surface    |
-| `experiment:mesoscope-vr-runtime`         | `experiment`      | Mesoscope-VR runtime behavior (state machine, training modes, CLI)     |
-| `experiment:zaber-interface`              | `experiment`      | Zaber motor interface mechanics (shared across acquisition systems)    |
-| `experiment:pipeline`                     | `experiment`      | End-to-end Sollertia experiment lifecycle orchestration                |
-| `experiment:acquisition-system-setup`     | `experiment`      | Post-flash hardware enumeration and configuration verification         |
+1. `experiment:microcontroller-interface` — the cross-repo paired Module + Interface contract; allocate the new
+   module type code and follow the slmc firmware + sle wrapper conventions it documents.
+2. `microcontroller:firmware-module` — the base C++ `Module` subclass mechanics that the skill above extends.
+3. For consumer-side changes (binding classes, system configuration, post-flash hardware setup), consult the
+   `experiment` plugin and the `sollertia-experiment` library for the consuming acquisition system's current surface
+   — Mesoscope-VR today, but a future consumer would expose its own skills.
 
 ***Note,*** the sollertia `experiment` plugin may be unavailable on hosts where the sollertia marketplace is not
 installed (the live `available-skills` list will not include any `experiment:*` entries). The source for each skill
