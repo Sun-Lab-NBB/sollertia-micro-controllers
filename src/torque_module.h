@@ -102,8 +102,8 @@ class TorqueModule final : public Module
                 uint8_t average_pool_size = 5;     ///< The number of readouts to average when computing torque.
         } PACKED_STRUCT _custom_parameters;
 
-        /// Reads the direction and magnitude of the torque recorded by the sensor since the last call and sends it to
-        /// the PC if it is significantly different from the previous readout.
+        /// Reads the current direction and magnitude of the torque recorded by the sensor and sends it to the PC if it
+        /// is significantly different from the previous readout.
         void CheckState()
         {
             static uint16_t previous_readout = kBaseline;  // NOLINT(*-dynamic-static-initializers)
@@ -112,7 +112,8 @@ class TorqueModule final : public Module
 
             uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
 
-            const uint16_t delta = abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout));
+            const auto delta =
+                static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
 
             // Suppresses readouts that are not significantly different from the previous value.
             if (delta <= _custom_parameters.delta_threshold)
@@ -125,7 +126,7 @@ class TorqueModule final : public Module
 
             // Rescales the signal so that 0 always means no torque and `kBaseline` always means maximum torque,
             // regardless of direction. Signals above baseline encode CCW, signals below baseline encode CW.
-            bool is_clockwise;
+            bool is_clockwise = false;
             if (signal > kBaseline)
             {
                 // CCW torque grows as the signal grows; rebase to [0, kBaseline].

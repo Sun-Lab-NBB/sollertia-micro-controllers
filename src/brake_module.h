@@ -15,7 +15,7 @@
  * @brief Controls the electromagnetic brake by sending digital or analog Pulse-Width-Modulated (PWM) currents through
  * the brake.
  *
- * @tparam kPin the analog pin connected to the logic terminal of the managed brake's FET-gated power relay.
+ * @tparam kPin the digital output pin connected to the logic terminal of the managed brake's FET-gated power relay.
  * @tparam kNormallyEngaged determines whether the brake is engaged (active) or disengaged (inactive) when unpowered.
  * @tparam kStartEngaged determines the initial state of the brake during class initialization.
  */

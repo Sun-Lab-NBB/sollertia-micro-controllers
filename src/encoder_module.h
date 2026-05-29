@@ -82,7 +82,7 @@ class EncoderModule final : public Module
         /**
          * @brief Overwrites the module's runtime parameters structure with the data received from the PC.
          *
-         * @details Derives positive and negative amortization caps from delta_threshold. Amortization permits the
+         * Derives positive and negative amortization caps from delta_threshold. Amortization permits the
          * overflow accumulator to store pulses in the non-reported direction up to the threshold, suppressing small
          * jitter (for example, a locked running wheel) so that opposing micro-motions cancel out instead of
          * accumulating into a spurious directional event.
@@ -153,6 +153,9 @@ class EncoderModule final : public Module
         /// encoder readouts.
         static constexpr int32_t kMultiplier = kInvertDirection ? -1 : 1;  // NOLINT(*-dynamic-static-initializers)
 
+        /// The number of full encoder rotations to measure when estimating the Pulse-Per-Revolution (PPR) value.
+        static constexpr uint8_t kPPRMeasuredRotations = 10;
+
         /// The encoder class that monitors the encoder's rotation. Must be initialized statically; deferred
         /// initialization causes a runtime crash.
         Encoder _encoder = Encoder(kPinA, kPinB);
@@ -168,8 +171,8 @@ class EncoderModule final : public Module
         /// _overflow attribute during runtime when reporting the CW rotation is disabled.
         int32_t _negative_amortization = 0;
 
-        /// Reads the direction and magnitude of the encoder's rotation relative to the previous check and sends it to
-        /// the PC if it is significantly different from the previous readout.
+        /// Reads the direction and magnitude of the encoder's rotation since the previous check and sends it to the PC
+        /// when the accumulated displacement exceeds the configured delta threshold.
         void ReadEncoder()
         {
             const int32_t new_motion = _encoder.readAndReset() * kMultiplier;
@@ -236,7 +239,7 @@ class EncoderModule final : public Module
             // Measures 10 full rotations (indicated by index pin pulses). Resets the pulse tracker at each measurement
             // and ignores the rotation direction.
             uint32_t total_pulses = 0;
-            for (uint8_t rotation_index = 0; rotation_index < 10; ++rotation_index)
+            for (uint8_t rotation_index = 0; rotation_index < kPPRMeasuredRotations; ++rotation_index)
             {
                 // Delays long enough for the index-pin trigger window to elapse before the next rotation is measured.
                 delay(100);
@@ -248,8 +251,8 @@ class EncoderModule final : public Module
                 total_pulses += abs(_encoder.readAndReset());
             }
 
-            // Half-up integer division: (sum + 5) / 10.
-            const uint32_t average_ppr = (total_pulses + 10 / 2) / 10;
+            // Half-up integer division: (sum + rotations / 2) / rotations.
+            const uint32_t average_ppr = (total_pulses + kPPRMeasuredRotations / 2) / kPPRMeasuredRotations;
 
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kPPR), average_ppr);
 

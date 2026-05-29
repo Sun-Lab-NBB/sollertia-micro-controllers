@@ -64,7 +64,7 @@ void setup()
 {
     Serial.begin(115200);  // The baudrate is ignored for Teensy boards.
 
-    // Teensy boards can support up to 16-bit ADC resolution, but 12-bit often produces cleaner readouts.
+    // Configures the ADC for 12-bit resolution (0-4095), which produces clean readouts for the analog sensors.
     analogReadResolution(12);
 
     axmc_kernel.Setup();

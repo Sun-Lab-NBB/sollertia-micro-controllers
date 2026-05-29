@@ -14,19 +14,22 @@ ___
 
 This project is part of the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) AI-assisted scientific data
 acquisition and processing platform, built on the [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework and
-developed in the Sun (NeuroAI) lab at Cornell University. It specializes the general microcontroller framework provided
-by the [ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller) library into the concrete
+developed in the [Sun (NeuroAI) lab](https://neuroai.github.io/sunlab/) at Cornell University. It specializes the
+general microcontroller framework provided by the
+[ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller) library into the concrete
 hardware modules consumed by Sollertia platform data acquisition systems and exposed to the host PC through the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) runtime.
 
-Currently, all Sollertia platform data acquisition systems can use up to three distinct classes of microcontrollers:
-AMC-ACTOR, AMC-SENSOR, and AMC-ENCODER. The Actor interfaces with the hardware modules that control the experiment
-environment, for example, to deliver water, lock the running wheel, and activate Virtual Reality screens. The Sensor
-monitors most data-acquisition devices, such as the torque sensor, lick sensor, and Mesoscope frame timestamp sensor.
-The Encoder uses hardware interrupt logic to monitor the animal's movement using a rotary encoder and, due to interrupt
-logic constraints, is segmented into its own class of microcontrollers. Using this combination of microcontrollers
-maximizes data acquisition speed while avoiding communication channel overloading. Typically, each acquisition system
-uses at most a single instance of each microcontroller type.
+The firmware is partitioned across microcontroller boards via preprocessor target macros in `main.cpp`; each board
+runs one firmware binary corresponding to one target. The current Mesoscope-VR acquisition system (the only consumer
+this project currently supports) uses three target classes: AMC-ACTOR, AMC-SENSOR, and AMC-ENCODER. The Actor
+interfaces with the hardware modules that control the experiment environment, for example, to deliver water, lock
+the running wheel, and activate Virtual Reality screens. The Sensor monitors most data-acquisition devices, such as
+the torque sensor, lick sensor, and Mesoscope frame timestamp sensor. The Encoder uses hardware interrupt logic to
+monitor the animal's movement using a rotary encoder and, due to interrupt logic constraints, is segmented into its
+own class of microcontrollers. This combination maximizes data acquisition speed while avoiding communication channel
+overloading. Future acquisition systems can define any other set of targets with any partitioning of the available
+modules across boards.
 
 This project contains both the schematics for assembling the microcontrollers used by the Sollertia platform and the
 firmware that runs on those microcontrollers. The hardware created and programmed as part of this project is designed
@@ -44,6 +47,7 @@ ___
 - [Per-Target Configuration](#per-target-configuration)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
+- [AI-Assisted Development](#ai-assisted-development)
 - [Versioning](#versioning)
 - [Authors](#authors)
 - [License](#license)
@@ -121,7 +125,32 @@ ___
 ## API Documentation
 
 See the [API documentation](https://sollertia-micro-controllers-api-docs.netlify.app/) for the detailed description of
-the methods and classes exposed by this project.
+the methods and classes exposed by components of this library.
+
+___
+
+## AI-Assisted Development
+
+Claude Code skills and AI development assets for this project are distributed through two marketplaces:
+
+- [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace:
+  - **experiment** plugin — the firmware-aware `/microcontroller-interface` skill, a registry of the paired
+    firmware Module and host-PC `ModuleInterface` classes and the cross-side contract they share. This is the entry
+    point for any change that spans this firmware and its
+    [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) consumer, and it links out to the
+    ataraxis plugins below for the underlying mechanics. The host-PC interface and configuration skills it
+    references belong to the consumer and are documented there.
+- [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace:
+  - **microcontroller** plugin — the foundational C++ firmware mechanics via the `/firmware-module` skill (base
+    `Module` subclass implementation: template parameters, parameter structs, status and command codes, and
+    stage-based command execution).
+  - **automation** plugin — shared development skills that enforce Sollertia platform coding conventions (C++ style,
+    README style, commit messages, Sphinx documentation, tox configuration) and general-purpose codebase exploration
+    tools.
+
+Install all three plugins to make the full skill set available to compatible AI coding agents. See
+[CLAUDE.md](CLAUDE.md) for the full session-start workflow and the canonical reading order when adding or modifying
+a firmware module.
 
 ___
 

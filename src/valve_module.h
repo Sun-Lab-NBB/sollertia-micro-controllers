@@ -11,6 +11,9 @@
 #include <digitalWriteFast.h>
 #include <module.h>
 
+/// The kTonePin template parameter value used to indicate that no piezoelectric tone buzzer is connected.
+static constexpr uint8_t kUnusedTonePin = 255;
+
 /**
  * @brief Dispenses precise volumes of fluid or gas by sending digital currents through a solenoid valve and optionally
  * emits tones by sending digital currents through a piezoelectric buzzer.
@@ -30,7 +33,7 @@ template <
     const uint8_t kValvePin,
     const bool kNormallyClosed,
     const bool kStartClosed = true,
-    const uint8_t kTonePin  = 255,
+    const uint8_t kTonePin  = kUnusedTonePin,
     const bool kNormallyOff = true,
     const bool kStartOff    = true>
 class ValveModule final : public Module
@@ -80,7 +83,7 @@ class ValveModule final : public Module
             {
                 // When the tone buzzer is unused, force the tone duration to 0 so downstream stage logic can branch on
                 // a single field instead of also checking kTonePin.
-                if (kTonePin == 255) _custom_parameters.tone_duration = 0;
+                if (kTonePin == kUnusedTonePin) _custom_parameters.tone_duration = 0;
 
                 // _tone_time_delta captures the extra time the tone must outlast the valve pulse. Setting it to 0 skips
                 // the extended-tone stage of Pulse() entirely.
@@ -115,7 +118,7 @@ class ValveModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            if (kTonePin != 255)
+            if (kTonePin != kUnusedTonePin)
             {
                 pinModeFast(kTonePin, OUTPUT);
                 if (kStartOff)
@@ -151,7 +154,8 @@ class ValveModule final : public Module
             _custom_parameters.calibration_count = 500;    // 500 pulses per calibration burst.
 
             // Tone duration is only meaningful when the tone pin is configured.
-            if (kTonePin != 255) _custom_parameters.tone_duration = 300000;  // 300000 microseconds == 300 milliseconds.
+            // 300000 microseconds == 300 milliseconds.
+            if (kTonePin != kUnusedTonePin) _custom_parameters.tone_duration = 300000;
             else _custom_parameters.tone_duration = 0;
 
             return true;
