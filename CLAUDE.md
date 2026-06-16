@@ -295,7 +295,7 @@ tox -e docs                      # Build Sphinx + Doxygen API documentation
      `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py` following
      `experiment:microcontroller-interface`'s "sle Python wrapper conventions" section.
    - **Binding-class integration** (consumer-specific): for the current Mesoscope-VR consumer, hand off to
-     `experiment:mesoscope-vr` to add calibration fields to `MesoscopeMicroControllers`, extend
+     `mesoscope:mesoscope-vr` to add calibration fields to `MesoscopeMicroControllers`, extend
      `MicroControllerInterfaces` to instantiate the new wrapper, and regenerate the system YAML. Bump the
      sollertia-experiment version so older deployments refuse to load against the new schema.
 
@@ -309,7 +309,7 @@ tox -e docs                      # Build Sphinx + Doxygen API documentation
    Cross-repository drift is a runtime hazard.
 3. Make the firmware change, bump the slmc version, and coordinate companion changes via
    `experiment:microcontroller-interface` (wrapper-side) and the consumer's instance skill (binding-side; for
-   Mesoscope-VR, `experiment:mesoscope-vr`).
+   Mesoscope-VR, `mesoscope:mesoscope-vr`).
 4. Re-flash all affected boards (a parameter-struct change typically affects only the one target that hosts the
    module, but a status-code change may ripple across PC-side log processing).
 
@@ -317,7 +317,7 @@ tox -e docs                      # Build Sphinx + Doxygen API documentation
 
 1. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
    before changing. For the current Mesoscope-VR consumer, this means coordinating with
-   `experiment:mesoscope-vr`'s maintenance contract.
+   `mesoscope:mesoscope-vr`'s maintenance contract.
 2. Update `main.cpp` (controller IDs, keepalive interval, module instantiation order) and propagate the changes
    to the matching constants in the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
    `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`).
