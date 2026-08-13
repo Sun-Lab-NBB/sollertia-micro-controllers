@@ -2,7 +2,6 @@
 
 # -- Project information -----------------------------------------------------
 project = 'sollertia-micro-controllers'
-# noinspection PyShadowingBuiltins
 copyright = '2026, Sun (NeuroAI) lab'
 author = 'Ivan Kondratyev'
 release = '4.0.0'

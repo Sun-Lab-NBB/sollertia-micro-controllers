@@ -268,6 +268,7 @@ pio run                          # Compile firmware for the active target macro 
 pio run -t upload                # Compile and flash to the connected board
 pio check                        # Run static analysis (cppcheck)
 tox -e docs                      # Build Sphinx + Doxygen API documentation
+tox -e deploy                    # Upload the built documentation to the project's Netlify site
 ```
 
 ### Workflow guidance
