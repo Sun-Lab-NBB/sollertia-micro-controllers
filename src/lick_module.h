@@ -71,7 +71,7 @@ class LickModule final : public Module
             // Assumes 12-bit ADC resolution.
             _custom_parameters.signal_threshold  = 300;  // Just above the typical noise floor.
             _custom_parameters.delta_threshold   = 300;  // At least half of the minimal signal_threshold.
-            _custom_parameters.average_pool_size = 0;    // Disables software averaging, but not ADC hardware averaging.
+            _custom_parameters.average_pool_size = 2;    // Averages two readouts to suppress single-sample ADC noise.
 
             // Realigns the change-detection state with the zero baseline reported below. The Kernel re-runs this
             // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
@@ -92,7 +92,7 @@ class LickModule final : public Module
         {
                 uint16_t signal_threshold = 300;  ///< The minimum voltage level to report to the PC.
                 uint16_t delta_threshold  = 300;  ///< The minimum change in voltage level readouts to report to the PC.
-                uint8_t average_pool_size = 0;    ///< The number of readouts to average to determine the voltage level.
+                uint8_t average_pool_size = 2;    ///< The number of readouts to average to determine the voltage level.
         } PACKED_STRUCT _custom_parameters;
 
         /// Stores the voltage level readout that the next delta comparison measures against, updated only when a

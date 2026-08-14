@@ -15,9 +15,8 @@
  * @brief Switches the screen power state by sending digital currents to the FET gate that shorts the power board's
  * button terminals.
  *
- * @note The default pulse duration is calibrated for non-blocking command execution. A blocking toggle command stalls
- * the controller for its full duration, which exceeds the keepalive interval the firmware declares and trips the
- * Kernel's emergency reset.
+ * @note The toggle command runs across RuntimeCycle() iterations rather than blocking. A blocking implementation
+ * would stall the controller for the whole pulse duration, starving the keepalive handshake the Kernel enforces.
  *
  * @tparam kPin the digital pin connected to the logic terminals of the VR screen's power board FET gates.
  * @tparam kNormallyClosed determines whether the FET relays used to control the screens' power are closed
@@ -79,7 +78,7 @@ class ScreenModule final : public Module
             // Notifies the PC about the initial state of the FET gates.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kOff));
 
-            _custom_parameters.pulse_duration = 1000000;  // 1000000 microseconds == 1 second.
+            _custom_parameters.pulse_duration = 500000;  // 500000 microseconds == 500 milliseconds.
 
             return true;
         }
@@ -90,7 +89,7 @@ class ScreenModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration = 1000000;  ///< The time, in microseconds, the button-press signal is held.
+                uint32_t pulse_duration = 500000;  ///< The time, in microseconds, the button-press signal is held.
         } PACKED_STRUCT _custom_parameters;
 
         /// Stores the digital signal that needs to be sent to the output pin to simulate pressing the screens' power

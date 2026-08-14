@@ -155,7 +155,7 @@ class ValveModule final : public Module
             }
 
             _custom_parameters.pulse_duration    = 39410;  // 39410 microseconds == 5.0 uL in the reference rig.
-            _custom_parameters.calibration_count = 500;    // 500 pulses per calibration burst.
+            _custom_parameters.calibration_count = 200;    // 200 pulses per calibration burst.
 
             // Tone duration is only meaningful when the tone pin is configured.
             // 300000 microseconds == 300 milliseconds.
@@ -174,7 +174,7 @@ class ValveModule final : public Module
         struct CustomRuntimeParameters
         {
                 uint32_t pulse_duration    = 39410;   ///< The time, in microseconds, to keep the valve open.
-                uint16_t calibration_count = 500;     ///< The number of times to pulse the valve during calibration.
+                uint16_t calibration_count = 200;     ///< The number of times to pulse the valve during calibration.
                 uint32_t tone_duration     = 300000;  ///< The time, in microseconds, to keep playing the tone.
         } PACKED_STRUCT _custom_parameters;
 

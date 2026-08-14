@@ -75,9 +75,9 @@ class TorqueModule final : public Module
 
             _custom_parameters.report_ccw        = true;
             _custom_parameters.report_cw         = true;
-            _custom_parameters.signal_threshold  = 100;
-            _custom_parameters.delta_threshold   = 70;
-            _custom_parameters.average_pool_size = 5;
+            _custom_parameters.signal_threshold  = 150;
+            _custom_parameters.delta_threshold   = 100;
+            _custom_parameters.average_pool_size = 4;
 
             // Realigns the change-detection state with the zero baseline reported below. The Kernel re-runs this
             // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
@@ -101,9 +101,9 @@ class TorqueModule final : public Module
         {
                 bool report_ccw           = true;  ///< Determines whether to report changes in the CCW direction.
                 bool report_cw            = true;  ///< Determines whether to report changes in the CW direction.
-                uint16_t signal_threshold = 100;   ///< The minimum rescaled torque magnitude reported to the PC.
-                uint16_t delta_threshold  = 70;    ///< The minimum signal difference to report torque changes.
-                uint8_t average_pool_size = 5;     ///< The number of readouts to average when computing torque.
+                uint16_t signal_threshold = 150;   ///< The minimum rescaled torque magnitude reported to the PC.
+                uint16_t delta_threshold  = 100;   ///< The minimum signal difference to report torque changes.
+                uint8_t average_pool_size = 4;     ///< The number of readouts to average when computing torque.
         } PACKED_STRUCT _custom_parameters;
 
         /// Stores the raw signal readout that the next delta comparison measures against, updated only when a

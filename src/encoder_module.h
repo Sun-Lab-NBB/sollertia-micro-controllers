@@ -79,20 +79,12 @@ class EncoderModule final : public Module
             Module(module_type, module_id, communication)
         {}
 
-        /**
-         * @brief Overwrites the module's runtime parameters structure with the data received from the PC.
-         *
-         * Derives positive and negative amortization caps from delta_threshold. Amortization permits the
-         * overflow accumulator to store pulses in the non-reported direction up to the threshold, suppressing small
-         * jitter (for example, a locked running wheel) so that opposing micro-motions cancel out instead of
-         * accumulating into a spurious directional event.
-         */
+        /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
             if (ExtractParameters(_custom_parameters))
             {
-                _positive_amortization = static_cast<int32_t>(_custom_parameters.delta_threshold);
-                _negative_amortization = -_positive_amortization;
+                ResolveAmortizationCaps();
                 return true;
             }
             return false;
@@ -126,8 +118,12 @@ class EncoderModule final : public Module
             _overflow = 0;
 
             _custom_parameters.report_ccw      = true;
-            _custom_parameters.report_cw       = true;
+            _custom_parameters.report_cw       = false;
             _custom_parameters.delta_threshold = 15;
+
+            // Realigns the amortization caps with the threshold assigned above. The Kernel re-runs this method on
+            // every controller reset and keepalive timeout, so the caps have to be restored alongside it.
+            ResolveAmortizationCaps();
 
             // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
             SendData(
@@ -144,9 +140,9 @@ class EncoderModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                bool report_ccw          = true;  ///< Determines whether to report rotation in the CCW direction.
-                bool report_cw           = true;  ///< Determines whether to report rotation in the CW direction.
-                uint32_t delta_threshold = 15;    ///< The minimum displacement change (delta) for reporting rotation.
+                bool report_ccw          = true;   ///< Determines whether to report rotation in the CCW direction.
+                bool report_cw           = false;  ///< Determines whether to report rotation in the CW direction.
+                uint32_t delta_threshold = 15;     ///< The minimum displacement change (delta) for reporting rotation.
         } PACKED_STRUCT _custom_parameters;
 
         /// Stores the multiplier used to optionally invert the pulse counter sign to virtually flip the direction of
@@ -170,6 +166,20 @@ class EncoderModule final : public Module
         /// Determines the maximum encoder displacement (rotation) in the clockwise (CW) that can be accumulated in the
         /// _overflow attribute during runtime when reporting the CW rotation is disabled.
         int32_t _negative_amortization = 0;
+
+        /**
+         * @brief Derives the positive and negative amortization caps from the instance's current delta threshold.
+         *
+         * Amortization permits the overflow accumulator to store pulses in the non-reported direction up to the
+         * threshold, suppressing small jitter (for example, a locked running wheel) so that opposing micro-motions
+         * cancel out instead of accumulating into a spurious directional event. Both SetupModule() and
+         * SetCustomParameters() call this method, keeping the caps consistent with the threshold ReadEncoder() uses.
+         */
+        void ResolveAmortizationCaps()
+        {
+            _positive_amortization = static_cast<int32_t>(_custom_parameters.delta_threshold);
+            _negative_amortization = -_positive_amortization;
+        }
 
         /// Reads the direction and magnitude of the encoder's rotation since the previous check and sends it to the PC
         /// when the accumulated displacement exceeds the configured delta threshold.
