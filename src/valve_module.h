@@ -296,18 +296,20 @@ class ValveModule final : public Module
         /// deactivates it.
         void Tone()
         {
-            // tone_duration == 0 covers both an unconfigured tone pin and an explicit zero-duration request.
-            if (_custom_parameters.tone_duration == 0)
-            {
-                SendData(static_cast<uint8_t>(kCustomStatusCodes::kInvalidToneConfiguration));
-                AbortCommand();
-                return;
-            }
-
             switch (get_command_stage())
             {
-                // Activates the tone buzzer.
+                // Verifies the tone configuration and activates the tone buzzer.
                 case 1:
+                    // tone_duration == 0 covers both an unconfigured tone pin and an explicit zero-duration request.
+                    // The check runs in the activation stage so that a parameter update arriving mid-tone leaves the
+                    // running command to finish its remaining stages.
+                    if (_custom_parameters.tone_duration == 0)
+                    {
+                        SendData(static_cast<uint8_t>(kCustomStatusCodes::kInvalidToneConfiguration));
+                        AbortCommand();
+                        return;
+                    }
+
                     digitalWriteFast(kTonePin, kActivate);
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOn));
                     AdvanceCommandStage();
