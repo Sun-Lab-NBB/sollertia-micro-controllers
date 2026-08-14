@@ -15,6 +15,10 @@
  * @brief Switches the screen power state by sending digital currents to the FET gate that shorts the power board's
  * button terminals.
  *
+ * @note The default pulse duration is calibrated for non-blocking command execution. A blocking toggle command stalls
+ * the controller for its full duration, which exceeds the keepalive interval the firmware declares and trips the
+ * Kernel's emergency reset.
+ *
  * @tparam kPin the digital pin connected to the logic terminals of the VR screen's power board FET gates.
  * @tparam kNormallyClosed determines whether the FET relays used to control the screens' power are closed
  * (On / conducting) or opened (Off / not conducting) when unpowered.
