@@ -106,7 +106,8 @@ class TorqueModule final : public Module
                 uint8_t average_pool_size = 5;     ///< The number of readouts to average when computing torque.
         } PACKED_STRUCT _custom_parameters;
 
-        /// Stores the most recent raw signal readout evaluated by the instance.
+        /// Stores the raw signal readout that the next delta comparison measures against, updated only when a
+        /// readout clears the delta threshold.
         uint16_t _previous_readout = kBaseline;
 
         /// Determines whether the most recent torque value reported to the PC was the zero-value baseline.
@@ -130,8 +131,8 @@ class TorqueModule final : public Module
 
             _previous_readout = signal;
 
-            // Rescales the signal so that 0 always means no torque and `kBaseline` always means maximum torque,
-            // regardless of direction. Signals above baseline encode CCW, signals below baseline encode CW.
+            // Rescales the signal into a direction-independent magnitude measured from `kBaseline`, so that 0 always
+            // means no torque. Signals above baseline encode CCW, signals below baseline encode CW.
             bool is_clockwise = false;
             if (signal > kBaseline)
             {

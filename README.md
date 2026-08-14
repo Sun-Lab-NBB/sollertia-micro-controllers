@@ -22,18 +22,18 @@ hardware modules consumed by Sollertia platform data acquisition systems and exp
 
 The firmware is partitioned across microcontroller boards via preprocessor target macros in `main.cpp`; each board
 runs one firmware binary corresponding to one target. The current Mesoscope-VR acquisition system (the only consumer
-this project currently supports) uses three target classes: AMC-ACTOR, AMC-SENSOR, and AMC-ENCODER. The Actor
-interfaces with the hardware modules that control the experiment environment, for example, to deliver water, lock
-the running wheel, and activate Virtual Reality screens. The Sensor monitors most data-acquisition devices, such as
-the torque sensor, lick sensor, and Mesoscope frame timestamp sensor. The Encoder uses hardware interrupt logic to
-monitor the animal's movement using a rotary encoder and, due to interrupt logic constraints, is segmented into its
-own class of microcontrollers. This combination maximizes data acquisition speed while avoiding communication channel
-overloading. Future acquisition systems can define any other set of targets with any partitioning of the available
-modules across boards.
+this project currently supports) uses three target classes: ACTOR, SENSOR, and ENCODER. The Actor interfaces with the
+hardware modules that control the experiment environment, for example, to deliver water, lock the running wheel, and
+activate Virtual Reality screens. The Sensor monitors most data-acquisition devices, such as the torque sensor, lick
+sensor, and Mesoscope frame timestamp sensor. The Encoder uses hardware interrupt logic to monitor the animal's
+movement using a rotary encoder and, due to interrupt logic constraints, is segmented into its own class of
+microcontrollers. This combination maximizes data acquisition speed while avoiding communication channel overloading.
+Future acquisition systems can define any other set of targets with any partitioning of the available modules across
+boards.
 
-This project contains both the schematics for assembling the microcontrollers used by the Sollertia platform and the
-firmware that runs on those microcontrollers. The hardware created and programmed as part of this project is designed
-to be interfaced through the bindings available from the
+This repository contains the firmware that runs on the microcontrollers used by the Sollertia platform and links to the
+schematics for assembling them. The hardware created and programmed as part of this project is designed to be
+interfaced through the bindings available from the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library, which is a core dependency of every
 Sollertia platform acquisition system.
 

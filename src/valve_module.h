@@ -154,7 +154,7 @@ class ValveModule final : public Module
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
             }
 
-            _custom_parameters.pulse_duration    = 35000;  // 35000 microseconds == ~5.0 uL in the reference rig.
+            _custom_parameters.pulse_duration    = 39410;  // 39410 microseconds == 5.0 uL in the reference rig.
             _custom_parameters.calibration_count = 500;    // 500 pulses per calibration burst.
 
             // Tone duration is only meaningful when the tone pin is configured.
@@ -173,7 +173,7 @@ class ValveModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration    = 35000;   ///< The time, in microseconds, to keep the valve open.
+                uint32_t pulse_duration    = 39410;   ///< The time, in microseconds, to keep the valve open.
                 uint16_t calibration_count = 500;     ///< The number of times to pulse the valve during calibration.
                 uint32_t tone_duration     = 300000;  ///< The time, in microseconds, to keep playing the tone.
         } PACKED_STRUCT _custom_parameters;

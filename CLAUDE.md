@@ -16,16 +16,19 @@ This ensures you:
 
 You MUST invoke the appropriate skill before performing ANY of the following tasks:
 
-| Task                                       | Skill to invoke    |
-|--------------------------------------------|--------------------|
-| Writing or modifying C++ code              | `/cpp-style`       |
-| Writing or modifying README files          | `/readme-style`    |
-| Writing or modifying Sphinx docs files     | `/api-docs`        |
-| Writing or modifying tox.ini               | `/tox-config`      |
-| Writing git commit messages                | `/commit`          |
-| Writing or modifying skill files / this MD | `/skill-design`    |
-| Auditing for style compliance              | `/audit-style`     |
-| Auditing for factual accuracy              | `/audit-facts`     |
+| Task                                       | Skill to invoke      |
+|--------------------------------------------|----------------------|
+| Writing or modifying C++ code              | `/cpp-style`         |
+| Writing or modifying README files          | `/readme-style`      |
+| Writing or modifying Sphinx docs files     | `/api-docs`          |
+| Writing or modifying platformio.ini        | `/platformio-config` |
+| Writing or modifying tox.ini               | `/tox-config`        |
+| Writing git commit messages                | `/commit`            |
+| Writing or modifying skill files / this MD | `/skill-design`      |
+| Auditing for style compliance              | `/audit-style`       |
+| Auditing for factual accuracy              | `/audit-facts`       |
+| Auditing for bugs and edge cases           | `/audit-correctness` |
+| Auditing for speed and memory use          | `/audit-performance` |
 
 Each skill contains a verification checklist that you MUST complete before submitting any work. Failure to invoke the
 appropriate skill results in style violations that block release.
@@ -33,7 +36,7 @@ appropriate skill results in style violations that block release.
 ## Cross-referenced library verification
 
 This firmware depends on two ataraxis C++ libraries and is consumed by one Sollertia Python library. Local clones
-of all three typically live alongside this repository under `/home/cyberaxolotl/Desktop/GitHubRepos/`.
+of all three typically live alongside this repository, in its parent directory.
 
 | Library                       | Direction       | Role                                                                                                                                                                                                                                |
 |-------------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -90,10 +93,10 @@ current consumer), so this file does not enumerate it. When a change reaches the
    `experiment` plugin and the `sollertia-experiment` library for the consuming acquisition system's current surface
    — Mesoscope-VR today, but a future consumer would expose its own skills.
 
-***Note,*** the sollertia `experiment` plugin may be unavailable on hosts where the sollertia marketplace is not
-installed (the live `available-skills` list will not include any `experiment:*` entries). The source for each skill
-lives at `sollertia/plugins/experiment/skills/<skill>/SKILL.md`; consult these files directly when the slash-command
-form is not available.
+***Note,*** the sollertia `experiment` and `mesoscope` plugins may be unavailable on hosts where the sollertia
+marketplace is not installed (the live `available-skills` list will not include any `experiment:*` or `mesoscope:*`
+entries). The source for each skill lives at `sollertia/plugins/<plugin>/skills/<skill>/SKILL.md`. Consult these
+files directly when the slash-command form is not available.
 
 ## Downstream library integration
 
@@ -230,8 +233,8 @@ target). The table below shows the current Mesoscope-VR deployment's assignments
   consistent with embedded C++ patterns.
 - **Custom status codes 51-250**: Module-specific `kCustomStatusCodes` use the 51-250 range reserved for module
   subclasses by `ataraxis-micro-controller`.
-- **LED-pin static_assert**: Every module class begins with a `static_assert(kPin != LED_BUILTIN, ...)` to prevent
-  accidental reuse of the LED pin for hardware control.
+- **LED-pin static_assert**: Every module class opens with `static_assert` blocks that reject `LED_BUILTIN` for each
+  of its pin template parameters, preventing accidental reuse of the LED pin for hardware control.
 - **Library-prefixed include guards**: All headers use `AXMC_<NAME>_MODULE_H` include guards.
 - **`get_active_command()` and `get_command_stage()` accessors**: Base-class accessors (snake_case) are called from
   each module's `RunActiveCommand()` dispatch switch and from stage-based command implementations.
@@ -333,10 +336,10 @@ tox -e deploy                    # Upload the built documentation to the project
 **Important considerations:**
 
 - Module type codes are `uint8_t`; the `(type, id)` pair must be unique across all modules on a single controller.
-- Controller IDs are `uint8_t`; the current Mesoscope-VR deployment uses 101 / 152 / 203. The firmware `Kernel`
-  requires uniqueness across concurrently-connected microcontrollers but does not document a reserved value at
-  the source layer. Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any
-  low values, and coordinate any new ID choice with the consuming acquisition system.
+- Controller IDs are `uint8_t`. The `Kernel` accepts values 1 through 255 and reserves 0, requiring each ID to be
+  unique across concurrently-connected microcontrollers. The current Mesoscope-VR deployment uses 101 / 152 / 203.
+  Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
+  coordinate any new ID choice with the consuming acquisition system.
 - Pin selection must avoid `LED_BUILTIN`; the per-module `static_assert` enforces this at compile time.
 - Calibration commands (`ValveModule::Calibrate`, `EncoderModule::GetPPR`) intentionally block the runtime; they
   must never run during an active acquisition session. Their Doxygen `@warning` blocks document this.

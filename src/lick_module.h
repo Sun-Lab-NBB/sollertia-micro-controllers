@@ -95,7 +95,8 @@ class LickModule final : public Module
                 uint8_t average_pool_size = 0;    ///< The number of readouts to average to determine the voltage level.
         } PACKED_STRUCT _custom_parameters;
 
-        /// Stores the most recent voltage level readout evaluated by the instance.
+        /// Stores the voltage level readout that the next delta comparison measures against, updated only when a
+        /// readout clears the delta threshold.
         uint16_t _previous_readout = 0;
 
         /// Determines whether the most recent readout reported to the PC was the zero-value baseline.

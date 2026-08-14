@@ -3,6 +3,9 @@ contact_links:
   - name: API documentation
     url: https://sollertia-micro-controllers-api-docs.netlify.app/
     about: Consult the API documentation before opening an issue.
-  - name: AI development assets
+  - name: AI development assets (ataraxis)
     url: https://github.com/Sun-Lab-NBB/ataraxis/issues
-    about: Report issues with Claude Code skills and other AI development assets in the ataraxis repository.
+    about: Report issues with the microcontroller and automation plugin skills in the ataraxis repository.
+  - name: AI development assets (sollertia)
+    url: https://github.com/Sun-Lab-NBB/sollertia/issues
+    about: Report issues with the experiment and mesoscope plugin skills in the sollertia repository.
