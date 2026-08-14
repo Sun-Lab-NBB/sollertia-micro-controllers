@@ -169,17 +169,19 @@ class TorqueModule final : public Module
             else
             {
                 // Reports the absolute directional torque value in raw ADC units, using the event code to encode the
-                // direction. Skips reporting if the class is configured to ignore changes in that direction.
+                // direction. Skips reporting if the class is configured to ignore changes in that direction. The
+                // zero-pull marker is armed only on the paths that transmit, so a direction the filter suppresses
+                // cannot leave the instance owing the PC a zero it never promised.
                 if (!is_clockwise && _custom_parameters.report_ccw)
                 {
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), signal);
+                    _previous_zero = false;
                 }
                 else if (is_clockwise && _custom_parameters.report_cw)
                 {
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kCWTorque), signal);
+                    _previous_zero = false;
                 }
-
-                _previous_zero = false;
             }
 
             CompleteCommand();

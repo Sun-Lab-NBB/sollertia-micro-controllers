@@ -226,10 +226,19 @@ class EncoderModule final : public Module
          * measure the number of pulses emitted during a full (360-degree) encoder rotation.
          *
          * @warning Blocks the runtime in-place. The method spins waiting on the index pin and delays between rotations.
-         * Intended only for offline calibration, never during an active behavior session.
+         * The index waits are intentionally unbounded, so the instance stays in this mode until the operator rotates
+         * the encoder through every measured revolution. Intended only for offline calibration, never during an active
+         * behavior session.
          */
         void GetPPR()
         {
+            // Discards an index window the encoder may already be parked inside, so the baseline below is established
+            // on a genuine low-to-high index transition. A baseline taken part-way through a window makes the first
+            // measured revolution short and deflates the average.
+            while (digitalReadFast(kPinX))
+            {
+            }
+
             // Waits for the first index-pin trigger to establish the rotation baseline before counting begins.
             while (!digitalReadFast(kPinX))
             {

@@ -14,7 +14,13 @@
  * @brief Controls the electromagnetic brake by sending digital or analog Pulse-Width-Modulated (PWM) currents through
  * the brake.
  *
+ * @note The default pulse duration is calibrated for non-blocking command execution. A blocking pulse command stalls
+ * the controller for its full duration, which exceeds the keepalive interval the firmware declares and trips the
+ * Kernel's emergency reset.
+ *
  * @tparam kPin the digital output pin connected to the logic terminal of the managed brake's FET-gated power relay.
+ * The pin has to support analogWrite(), as the module drives it with a PWM waveform for every braking strength
+ * between the two extremes.
  * @tparam kNormallyEngaged determines whether the brake is engaged (active) or disengaged (inactive) when unpowered.
  * @tparam kStartEngaged determines the initial state of the brake during class initialization.
  */
@@ -87,6 +93,10 @@ class BrakeModule final : public Module
         {
             pinMode(kPin, OUTPUT);
 
+            // Realigns the pin-mode tracker with the GPIO mode the call above selects. The Kernel re-runs this method
+            // on every controller reset and keepalive timeout, so the tracker has to be restored alongside it.
+            _analog_mode = false;
+
             // Drives the brake into the configured initial state, accounting for whether the relay is normally engaged.
             if (kStartEngaged)
             {
@@ -99,7 +109,9 @@ class BrakeModule final : public Module
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
             }
 
-            _custom_parameters.braking_strength = 128;      // 50% braking strength.
+            // Defaulting to full strength keeps the pin under GPIO control until the PC requests an intermediate
+            // strength, which is the only case that needs the PWM peripheral.
+            _custom_parameters.braking_strength = kFullEngageDuty;
             _custom_parameters.pulse_duration   = 1000000;  // 1000000 microseconds == 1 second.
 
             return true;
@@ -108,10 +120,20 @@ class BrakeModule final : public Module
         ~BrakeModule() override = default;
 
     private:
+        /// Stores the braking_strength value that engages the brake at maximum strength, expressed in the inverted
+        /// frame SetCustomParameters() stores. Driving it as a digital level is electrically identical to driving it
+        /// as a duty cycle, so the two extremes stay on the GPIO peripheral. Declared before the parameter structure
+        /// that defaults to it, as an enclosing-class constant is not in scope inside a nested default initializer.
+        static constexpr uint8_t kFullEngageDuty = kNormallyEngaged ? 0 : 255;  // NOLINT(*-dynamic-static-initializers)
+
+        /// Stores the braking_strength value that disengages the brake, expressed in the same inverted frame.
+        static constexpr uint8_t kFullDisengageDuty =
+            kNormallyEngaged ? 255 : 0;  // NOLINT(*-dynamic-static-initializers)
+
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint8_t braking_strength = 128;      ///< Determines the strength of the brake in variable mode.
+                uint8_t braking_strength = kFullEngageDuty;  ///< Determines the strength of the brake in variable mode.
                 uint32_t pulse_duration  = 1000000;  ///< The time, in microseconds, to engage the brake during pulses.
         } PACKED_STRUCT _custom_parameters;
 
@@ -121,10 +143,33 @@ class BrakeModule final : public Module
         /// Stores the digital signal that needs to be sent to the output pin to disengage the brake.
         static constexpr bool kDisengage = kNormallyEngaged ? HIGH : LOW;  // NOLINT(*-dynamic-static-initializers)
 
+        /// Determines whether the PWM peripheral currently drives the output pin instead of the GPIO peripheral.
+        bool _analog_mode = false;
+
+        /**
+         * @brief Drives the output pin with the requested digital level, reclaiming GPIO control of the pin when the
+         * PWM peripheral currently owns it.
+         *
+         * analogWrite() re-points the pin at the PWM peripheral, which leaves every later digitalWriteFast() writing
+         * to a register the pin no longer reads. The level is written before the mode switch, as the two use separate
+         * registers, so the pin never briefly emits the stale level its output register held.
+         *
+         * @param level the digital signal to send to the output pin.
+         */
+        void WriteDigital(const bool level)
+        {
+            digitalWriteFast(kPin, level);
+
+            if (!_analog_mode) return;
+
+            pinMode(kPin, OUTPUT);
+            _analog_mode = false;
+        }
+
         /// Engages the brake at the maximum strength.
         void EnableBrake()
         {
-            digitalWriteFast(kPin, kEngage);
+            WriteDigital(kEngage);
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kEngaged));
             CompleteCommand();
         }
@@ -132,17 +177,40 @@ class BrakeModule final : public Module
         /// Disengages the brake.
         void DisableBrake()
         {
-            digitalWriteFast(kPin, kDisengage);
+            WriteDigital(kDisengage);
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
             CompleteCommand();
         }
 
-        /// Engages the brake at the specified strength level.
+        /**
+         * @brief Engages the brake at the specified strength level.
+         *
+         * The two extremes are exactly representable as digital levels, so they take the GPIO path and leave the pin
+         * under GPIO control. Only an intermediate strength hands the pin to the PWM peripheral, which keeps a system
+         * that only ever toggles the brake fully on and off from ever leaving the digital mode.
+         */
         void SetBrakingPower()
         {
-            // Drives the pin with a PWM square wave so the brake is engaged for the configured duty-cycle fraction.
-            analogWrite(kPin, _custom_parameters.braking_strength);
-            SendData(static_cast<uint8_t>(kCustomStatusCodes::kVariable));
+            const uint8_t strength = _custom_parameters.braking_strength;
+
+            if (strength == kFullEngageDuty)
+            {
+                WriteDigital(kEngage);
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kEngaged));
+            }
+            else if (strength == kFullDisengageDuty)
+            {
+                WriteDigital(kDisengage);
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
+            }
+            else
+            {
+                // Drives the pin with a PWM square wave so the brake is engaged for the configured duty-cycle fraction.
+                analogWrite(kPin, strength);
+                _analog_mode = true;
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kVariable));
+            }
+
             CompleteCommand();
         }
 
@@ -154,7 +222,7 @@ class BrakeModule final : public Module
             {
                 // Engages the brake at maximum strength.
                 case 1:
-                    digitalWriteFast(kPin, kEngage);
+                    WriteDigital(kEngage);
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kEngaged));
                     AdvanceCommandStage();
                     return;
@@ -167,7 +235,7 @@ class BrakeModule final : public Module
 
                 // Disengages the brake.
                 case 3:
-                    digitalWriteFast(kPin, kDisengage);
+                    WriteDigital(kDisengage);
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kDisengaged));
                     CompleteCommand();
                     return;
