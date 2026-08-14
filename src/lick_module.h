@@ -8,7 +8,6 @@
 #define AXMC_LICK_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -67,12 +66,17 @@ class LickModule final : public Module
         {
             // Pull-down mode: the sensor spends most of its runtime in an uncompleted-circuit state, so the pin must
             // be pulled to 0 at rest.
-            pinModeFast(kPin, INPUT_PULLDOWN);
+            pinMode(kPin, INPUT_PULLDOWN);
 
             // Assumes 12-bit ADC resolution.
             _custom_parameters.signal_threshold  = 300;  // Just above the typical noise floor.
             _custom_parameters.delta_threshold   = 300;  // At least half of the minimal signal_threshold.
             _custom_parameters.average_pool_size = 0;    // Disables software averaging, but not ADC hardware averaging.
+
+            // Realigns the change-detection state with the zero baseline reported below. The Kernel re-runs this
+            // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
+            _previous_readout = 0;
+            _previous_zero    = true;
 
             // Notifies the PC about the initial sensor state.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), static_cast<uint16_t>(0));
@@ -91,18 +95,20 @@ class LickModule final : public Module
                 uint8_t average_pool_size = 0;    ///< The number of readouts to average to determine the voltage level.
         } PACKED_STRUCT _custom_parameters;
 
+        /// Stores the most recent voltage level readout evaluated by the instance.
+        uint16_t _previous_readout = 0;
+
+        /// Determines whether the most recent readout reported to the PC was the zero-value baseline.
+        bool _previous_zero = true;
+
         /// Checks the voltage level across the sensor's circuitry and sends it to the PC if it is significantly
         /// different from the previous readout.
         void CheckState()
         {
-            // A zero-baseline message is emitted during SetupModule(), so the initial previous_zero is true.
-            static uint16_t previous_readout = 0;
-            static bool previous_zero        = true;
-
-            const uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
+            const uint16_t signal = AnalogRead<kPin>(_custom_parameters.average_pool_size);
 
             const auto delta =
-                static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
+                static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(_previous_readout)));
 
             // Suppresses readouts that are not significantly different from the previous value.
             if (delta <= _custom_parameters.delta_threshold)
@@ -111,23 +117,23 @@ class LickModule final : public Module
                 return;
             }
 
-            previous_readout = signal;
+            _previous_readout = signal;
 
             if (signal >= _custom_parameters.signal_threshold)
             {
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), signal);
-                previous_zero = false;
+                _previous_zero = false;
             }
 
             // Sub-threshold signal: emits a single zero-pull message if the previously reported value was not already
             // zero, to mark the end of an above-threshold event without spamming the PC.
-            else if (!previous_zero)
+            else if (!_previous_zero)
             {
                 SendData(
                     static_cast<uint8_t>(kCustomStatusCodes::kChanged),
                     static_cast<uint16_t>(0)
                 );
-                previous_zero = true;
+                _previous_zero = true;
             }
 
             CompleteCommand();

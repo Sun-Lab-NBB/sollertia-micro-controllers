@@ -63,7 +63,6 @@ ___
 ### Additional Dependencies
 These dependencies are automatically resolved whenever the project is installed via PlatformIO.
 
-- [digitalWriteFast](https://github.com/ArminJo/digitalWriteFast).
 - [Encoder](https://github.com/PaulStoffregen/Encoder).
 - [ataraxis-micro-controller](https://github.com/Sun-Lab-NBB/ataraxis-micro-controller).
 - [ataraxis-transport-layer-mc](https://github.com/Sun-Lab-NBB/ataraxis-transport-layer-mc).

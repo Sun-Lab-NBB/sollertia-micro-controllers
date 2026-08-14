@@ -8,7 +8,6 @@
 #define AXMC_TORQUE_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -72,13 +71,18 @@ class TorqueModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            pinModeFast(kPin, INPUT);
+            pinMode(kPin, INPUT);
 
             _custom_parameters.report_ccw        = true;
             _custom_parameters.report_cw         = true;
             _custom_parameters.signal_threshold  = 100;
             _custom_parameters.delta_threshold   = 70;
             _custom_parameters.average_pool_size = 5;
+
+            // Realigns the change-detection state with the zero baseline reported below. The Kernel re-runs this
+            // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
+            _previous_readout = kBaseline;
+            _previous_zero    = true;
 
             // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
             SendData(
@@ -102,18 +106,20 @@ class TorqueModule final : public Module
                 uint8_t average_pool_size = 5;     ///< The number of readouts to average when computing torque.
         } PACKED_STRUCT _custom_parameters;
 
+        /// Stores the most recent raw signal readout evaluated by the instance.
+        uint16_t _previous_readout = kBaseline;
+
+        /// Determines whether the most recent torque value reported to the PC was the zero-value baseline.
+        bool _previous_zero = true;
+
         /// Reads the current direction and magnitude of the torque recorded by the sensor and sends it to the PC if it
         /// is significantly different from the previous readout.
         void CheckState()
         {
-            static uint16_t previous_readout = kBaseline;  // NOLINT(*-dynamic-static-initializers)
-            // A zero-baseline message is emitted during SetupModule(), so the initial previous_zero is true.
-            static bool previous_zero        = true;
-
-            uint16_t signal = AnalogRead(kPin, _custom_parameters.average_pool_size);
+            uint16_t signal = AnalogRead<kPin>(_custom_parameters.average_pool_size);
 
             const auto delta =
-                static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(previous_readout)));
+                static_cast<uint16_t>(abs(static_cast<int32_t>(signal) - static_cast<int32_t>(_previous_readout)));
 
             // Suppresses readouts that are not significantly different from the previous value.
             if (delta <= _custom_parameters.delta_threshold)
@@ -122,7 +128,7 @@ class TorqueModule final : public Module
                 return;
             }
 
-            previous_readout = signal;
+            _previous_readout = signal;
 
             // Rescales the signal so that 0 always means no torque and `kBaseline` always means maximum torque,
             // regardless of direction. Signals above baseline encode CCW, signals below baseline encode CW.
@@ -151,13 +157,13 @@ class TorqueModule final : public Module
             // zero, to mark the end of an above-threshold event without spamming the PC. Direction is irrelevant.
             if (signal < _custom_parameters.signal_threshold)
             {
-                if (!previous_zero)
+                if (!_previous_zero)
                 {
                     SendData(
                         static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
                         static_cast<uint16_t>(0)
                     );
-                    previous_zero = true;
+                    _previous_zero = true;
                 }
             }
             else
@@ -173,7 +179,7 @@ class TorqueModule final : public Module
                     SendData(static_cast<uint8_t>(kCustomStatusCodes::kCWTorque), signal);
                 }
 
-                previous_zero = false;
+                _previous_zero = false;
             }
 
             CompleteCommand();

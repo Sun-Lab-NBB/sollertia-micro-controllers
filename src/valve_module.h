@@ -8,7 +8,6 @@
 #define AXMC_VALVE_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <module.h>
 
 /// The kTonePin template parameter value used to indicate that no piezoelectric tone buzzer is connected.
@@ -85,11 +84,7 @@ class ValveModule final : public Module
                 // a single field instead of also checking kTonePin.
                 if (kTonePin == kUnusedTonePin) _custom_parameters.tone_duration = 0;
 
-                // _tone_time_delta captures the extra time the tone must outlast the valve pulse. Setting it to 0 skips
-                // the extended-tone stage of Pulse() entirely.
-                if (_custom_parameters.tone_duration > _custom_parameters.pulse_duration)
-                    _tone_time_delta = _custom_parameters.tone_duration - _custom_parameters.pulse_duration;
-                else _tone_time_delta = 0;
+                ResolveToneTimeDelta();
                 return true;
             }
             return false;
@@ -120,7 +115,7 @@ class ValveModule final : public Module
         {
             if (kTonePin != kUnusedTonePin)
             {
-                pinModeFast(kTonePin, OUTPUT);
+                pinMode(kTonePin, OUTPUT);
                 if (kStartOff)
                 {
                     digitalWriteFast(kTonePin, kInactivate);
@@ -138,7 +133,7 @@ class ValveModule final : public Module
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kToneOff));
             }
 
-            pinModeFast(kValvePin, OUTPUT);
+            pinMode(kValvePin, OUTPUT);
             if (kStartClosed)
             {
                 digitalWriteFast(kValvePin, kClose);
@@ -157,6 +152,8 @@ class ValveModule final : public Module
             // 300000 microseconds == 300 milliseconds.
             if (kTonePin != kUnusedTonePin) _custom_parameters.tone_duration = 300000;
             else _custom_parameters.tone_duration = 0;
+
+            ResolveToneTimeDelta();
 
             return true;
         }
@@ -192,6 +189,20 @@ class ValveModule final : public Module
         /// Stores the difference, in microseconds, between the valve's pulse duration and the buzzer's tone duration,
         /// if both are used during valve pulsing.
         uint32_t _tone_time_delta = 0;
+
+        /**
+         * @brief Derives the extra tone time from the instance's current pulse and tone durations.
+         *
+         * A delta of 0 skips the extended-tone stage of Pulse(), so the stage that silences the buzzer only runs when
+         * the tone is configured to outlast the valve pulse. Both SetupModule() and SetCustomParameters() call this
+         * method, keeping the delta consistent with the durations that Pulse() branches on.
+         */
+        void ResolveToneTimeDelta()
+        {
+            if (_custom_parameters.tone_duration > _custom_parameters.pulse_duration)
+                _tone_time_delta = _custom_parameters.tone_duration - _custom_parameters.pulse_duration;
+            else _tone_time_delta = 0;
+        }
 
         /// Opens the valve to deliver a precise volume of fluid or gas and then closes it.
         void Pulse()
