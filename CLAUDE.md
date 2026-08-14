@@ -238,13 +238,12 @@ target). The table below shows the current Mesoscope-VR deployment's assignments
 
 ### Dependencies
 
-| Library                       | Purpose                                              | Source             |
-|-------------------------------|------------------------------------------------------|--------------------|
-| `Arduino.h`                   | Core Arduino framework (Serial, Stream, types)       | platform-bundled   |
-| `digitalWriteFast`            | Fast GPIO read/write operations                      | PlatformIO library |
-| `Encoder`                     | Quadrature encoder pulse counting (Paul Stoffregen)  | PlatformIO library |
-| `ataraxis-transport-layer-mc` | CRC-16 checksummed serial communication with COBS    | PlatformIO library |
-| `ataraxis-micro-controller`   | `Kernel`, `Communication`, `Module` base class       | PlatformIO library |
+| Library                       | Purpose                                                   | Source             |
+|-------------------------------|-----------------------------------------------------------|--------------------|
+| `Arduino.h`                   | Core Arduino framework (Serial, Stream, types, fast GPIO) | platform-bundled   |
+| `Encoder`                     | Quadrature encoder pulse counting (Paul Stoffregen)       | PlatformIO library |
+| `ataraxis-transport-layer-mc` | CRC-16 checksummed serial communication with COBS         | PlatformIO library |
+| `ataraxis-micro-controller`   | `Kernel`, `Communication`, `Module` base class            | PlatformIO library |
 
 ### Build system
 

@@ -9,7 +9,6 @@
 #define AXMC_SCREEN_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -69,7 +68,7 @@ class ScreenModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            pinModeFast(kPin, OUTPUT);
+            pinMode(kPin, OUTPUT);
 
             digitalWriteFast(kPin, kOff);
 

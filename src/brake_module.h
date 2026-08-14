@@ -8,7 +8,6 @@
 #define AXMC_BRAKE_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -86,7 +85,7 @@ class BrakeModule final : public Module
         /// Sets the module instance's software and hardware parameters to the default values.
         bool SetupModule() override
         {
-            pinModeFast(kPin, OUTPUT);
+            pinMode(kPin, OUTPUT);
 
             // Drives the brake into the configured initial state, accounting for whether the relay is normally engaged.
             if (kStartEngaged)

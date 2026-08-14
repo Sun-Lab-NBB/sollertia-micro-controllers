@@ -9,7 +9,6 @@
 #define AXMC_TTL_MODULE_H
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>
 #include <module.h>
 
 /**
@@ -85,7 +84,7 @@ class TTLModule final : public Module
         {
             if (kOutput)
             {
-                pinModeFast(kPin, OUTPUT);
+                pinMode(kPin, OUTPUT);
 
                 if (!kStartOn)
                 {
@@ -100,7 +99,7 @@ class TTLModule final : public Module
             }
             else
             {
-                pinModeFast(kPin, INPUT);
+                pinMode(kPin, INPUT);
 
                 // Notifies the PC about the initial sensor state, which is always reported as a zero-value baseline.
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kInputOff));
@@ -108,6 +107,10 @@ class TTLModule final : public Module
 
             _custom_parameters.pulse_duration    = 10000;  // 10000 microseconds == 10 milliseconds.
             _custom_parameters.average_pool_size = 0;      // 0 or 1 disables averaging.
+
+            // Realigns the change-detection state with the zero baseline reported above. The Kernel re-runs this
+            // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
+            _previous_input_status = false;
 
             return true;
         }
@@ -121,6 +124,9 @@ class TTLModule final : public Module
                 uint32_t pulse_duration   = 10000;  ///< The time, in microseconds, the pin outputs HIGH during pulses.
                 uint8_t average_pool_size = 0;  ///< The number of digital readouts to average when checking pin state.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Determines whether the input pin was reading HIGH during the instance's previous state evaluation.
+        bool _previous_input_status = false;
 
         /// Sets the output pin to HIGH for the requested pulse_duration of microseconds and then sets it LOW.
         void SendPulse()
@@ -195,8 +201,6 @@ class TTLModule final : public Module
         /// previous readout.
         void CheckState()
         {
-            static bool previous_input_status = false;
-
             // Output-mode instance: report invalid pin mode and abort future executions.
             if (kOutput)
             {
@@ -206,10 +210,10 @@ class TTLModule final : public Module
             }
 
             // Only emits when the state has changed since the previous evaluation, to reduce traffic to the PC.
-            if (const bool current_state = DigitalRead(kPin, _custom_parameters.average_pool_size);
-                previous_input_status != current_state)
+            if (const bool current_state = DigitalRead<kPin>(_custom_parameters.average_pool_size);
+                _previous_input_status != current_state)
             {
-                previous_input_status = current_state;
+                _previous_input_status = current_state;
 
                 if (current_state) SendData(static_cast<uint8_t>(kCustomStatusCodes::kInputOn));
                 else SendData(static_cast<uint8_t>(kCustomStatusCodes::kInputOff));
