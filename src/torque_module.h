@@ -4,8 +4,8 @@
  * @brief Provides the TorqueModule class that monitors and records the data produced by a reaction torque sensor.
  */
 
-#ifndef AXMC_TORQUE_MODULE_H
-#define AXMC_TORQUE_MODULE_H
+#ifndef SLMC_TORQUE_MODULE_H
+#define SLMC_TORQUE_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -73,11 +73,11 @@ class TorqueModule final : public Module
         {
             pinMode(kPin, INPUT);
 
-            _custom_parameters.report_ccw        = true;
-            _custom_parameters.report_cw         = true;
-            _custom_parameters.signal_threshold  = 100;
-            _custom_parameters.delta_threshold   = 70;
-            _custom_parameters.average_pool_size = 5;
+            _custom_parameters.report_ccw        = kDefaultReportCcw;
+            _custom_parameters.report_cw         = kDefaultReportCw;
+            _custom_parameters.signal_threshold  = kDefaultSignalThreshold;
+            _custom_parameters.delta_threshold   = kDefaultDeltaThreshold;
+            _custom_parameters.average_pool_size = kDefaultAveragePoolSize;
 
             // Realigns the change-detection state with the zero baseline reported below. The Kernel re-runs this
             // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
@@ -85,10 +85,7 @@ class TorqueModule final : public Module
             _previous_zero    = true;
 
             // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
-            SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
-                static_cast<uint16_t>(0)
-            );
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), static_cast<uint16_t>(0));
 
             return true;
         }
@@ -99,14 +96,30 @@ class TorqueModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                bool report_ccw           = true;  ///< Determines whether to report changes in the CCW direction.
-                bool report_cw            = true;  ///< Determines whether to report changes in the CW direction.
-                uint16_t signal_threshold = 100;   ///< The minimum rescaled torque magnitude reported to the PC.
-                uint16_t delta_threshold  = 70;    ///< The minimum signal difference to report torque changes.
-                uint8_t average_pool_size = 5;     ///< The number of readouts to average when computing torque.
+                bool report_ccw           = kDefaultReportCcw;        ///< Determines whether to report CCW changes.
+                bool report_cw            = kDefaultReportCw;         ///< Determines whether to report CW changes.
+                uint16_t signal_threshold = kDefaultSignalThreshold;  ///< The minimum torque magnitude reported.
+                uint16_t delta_threshold  = kDefaultDeltaThreshold;   ///< The minimum signal difference reported.
+                uint8_t average_pool_size = kDefaultAveragePoolSize;  ///< The number of readouts averaged.
         } PACKED_STRUCT _custom_parameters;
 
-        /// Stores the most recent raw signal readout evaluated by the instance.
+        /// Determines whether the instance reports torque changes in the counterclockwise (CCW) direction by default.
+        static constexpr bool kDefaultReportCcw = true;
+
+        /// Determines whether the instance reports torque changes in the clockwise (CW) direction by default.
+        static constexpr bool kDefaultReportCw = true;
+
+        /// Stores the default minimum rescaled torque magnitude reported to the PC, in 12-bit ADC units.
+        static constexpr uint16_t kDefaultSignalThreshold = 150;
+
+        /// Stores the default minimum signal difference required to report torque changes, in 12-bit ADC units.
+        static constexpr uint16_t kDefaultDeltaThreshold = 100;
+
+        /// Stores the default number of readouts to average when computing the reported torque value.
+        static constexpr uint8_t kDefaultAveragePoolSize = 4;
+
+        /// Stores the raw signal readout that the next delta comparison measures against, updated only when a
+        /// readout clears the delta threshold.
         uint16_t _previous_readout = kBaseline;
 
         /// Determines whether the most recent torque value reported to the PC was the zero-value baseline.
@@ -130,8 +143,8 @@ class TorqueModule final : public Module
 
             _previous_readout = signal;
 
-            // Rescales the signal so that 0 always means no torque and `kBaseline` always means maximum torque,
-            // regardless of direction. Signals above baseline encode CCW, signals below baseline encode CW.
+            // Rescales the signal into a direction-independent magnitude measured from `kBaseline`, so that 0 always
+            // means no torque. Signals above baseline encode CCW, signals below baseline encode CW.
             bool is_clockwise = false;
             if (signal > kBaseline)
             {
@@ -159,10 +172,7 @@ class TorqueModule final : public Module
             {
                 if (!_previous_zero)
                 {
-                    SendData(
-                        static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
-                        static_cast<uint16_t>(0)
-                    );
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), static_cast<uint16_t>(0));
                     _previous_zero = true;
                 }
             }
@@ -188,4 +198,4 @@ class TorqueModule final : public Module
         }
 };
 
-#endif  //AXMC_TORQUE_MODULE_H
+#endif  // SLMC_TORQUE_MODULE_H

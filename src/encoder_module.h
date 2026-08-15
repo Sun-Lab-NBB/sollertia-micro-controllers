@@ -8,8 +8,8 @@
  * compatible with other interrupt libraries.
  */
 
-#ifndef AXMC_ENCODER_MODULE_H
-#define AXMC_ENCODER_MODULE_H
+#ifndef SLMC_ENCODER_MODULE_H
+#define SLMC_ENCODER_MODULE_H
 
 // This definition must precede Encoder.h inclusion. It increases the resolution of the encoder, but interferes with
 // any other library that makes use of AttachInterrupt().
@@ -79,20 +79,12 @@ class EncoderModule final : public Module
             Module(module_type, module_id, communication)
         {}
 
-        /**
-         * @brief Overwrites the module's runtime parameters structure with the data received from the PC.
-         *
-         * Derives positive and negative amortization caps from delta_threshold. Amortization permits the
-         * overflow accumulator to store pulses in the non-reported direction up to the threshold, suppressing small
-         * jitter (for example, a locked running wheel) so that opposing micro-motions cancel out instead of
-         * accumulating into a spurious directional event.
-         */
+        /// Overwrites the module's runtime parameters structure with the data received from the PC.
         bool SetCustomParameters() override
         {
             if (ExtractParameters(_custom_parameters))
             {
-                _positive_amortization = static_cast<int32_t>(_custom_parameters.delta_threshold);
-                _negative_amortization = -_positive_amortization;
+                ResolveAmortizationCaps();
                 return true;
             }
             return false;
@@ -125,15 +117,16 @@ class EncoderModule final : public Module
 
             _overflow = 0;
 
-            _custom_parameters.report_ccw      = true;
-            _custom_parameters.report_cw       = true;
-            _custom_parameters.delta_threshold = 15;
+            _custom_parameters.report_ccw      = kDefaultReportCcw;
+            _custom_parameters.report_cw       = kDefaultReportCw;
+            _custom_parameters.delta_threshold = kDefaultDeltaThreshold;
+
+            // Realigns the amortization caps with the threshold assigned above. The Kernel re-runs this method on
+            // every controller reset and keepalive timeout, so the caps have to be restored alongside it.
+            ResolveAmortizationCaps();
 
             // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
-            SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW),
-                static_cast<uint32_t>(0)
-            );
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW), static_cast<uint32_t>(0));
 
             return true;
         }
@@ -144,10 +137,19 @@ class EncoderModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                bool report_ccw          = true;  ///< Determines whether to report rotation in the CCW direction.
-                bool report_cw           = true;  ///< Determines whether to report rotation in the CW direction.
-                uint32_t delta_threshold = 15;    ///< The minimum displacement change (delta) for reporting rotation.
+                bool report_ccw          = kDefaultReportCcw;       ///< Determines whether to report CCW rotation.
+                bool report_cw           = kDefaultReportCw;        ///< Determines whether to report CW rotation.
+                uint32_t delta_threshold = kDefaultDeltaThreshold;  ///< The minimum displacement change reported.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Determines whether the module reports counterclockwise (CCW) rotation by default.
+        static constexpr bool kDefaultReportCcw = true;
+
+        /// Determines whether the module reports clockwise (CW) rotation by default.
+        static constexpr bool kDefaultReportCw = false;
+
+        /// Stores the default minimum displacement change (delta), in encoder pulses, for reporting rotation.
+        static constexpr uint32_t kDefaultDeltaThreshold = 15;
 
         /// Stores the multiplier used to optionally invert the pulse counter sign to virtually flip the direction of
         /// encoder readouts.
@@ -155,6 +157,9 @@ class EncoderModule final : public Module
 
         /// The number of full encoder rotations to measure when estimating the Pulse-Per-Revolution (PPR) value.
         static constexpr uint8_t kPPRMeasuredRotations = 10;
+
+        /// Stores the delay, in milliseconds, that lets the index-pin trigger window elapse between rotations.
+        static constexpr uint16_t kIndexSettleDelay = 100;
 
         /// The encoder class that monitors the encoder's rotation. Must be initialized statically; deferred
         /// initialization causes a runtime crash.
@@ -170,6 +175,20 @@ class EncoderModule final : public Module
         /// Determines the maximum encoder displacement (rotation) in the clockwise (CW) that can be accumulated in the
         /// _overflow attribute during runtime when reporting the CW rotation is disabled.
         int32_t _negative_amortization = 0;
+
+        /**
+         * @brief Derives the positive and negative amortization caps from the instance's current delta threshold.
+         *
+         * Amortization permits the overflow accumulator to store pulses in the non-reported direction up to the
+         * threshold, suppressing small jitter (for example, a locked running wheel) so that opposing micro-motions
+         * cancel out instead of accumulating into a spurious directional event. Both SetupModule() and
+         * SetCustomParameters() call this method, keeping the caps consistent with the threshold ReadEncoder() uses.
+         */
+        void ResolveAmortizationCaps()
+        {
+            _positive_amortization = static_cast<int32_t>(_custom_parameters.delta_threshold);
+            _negative_amortization = -_positive_amortization;
+        }
 
         /// Reads the direction and magnitude of the encoder's rotation since the previous check and sends it to the PC
         /// when the accumulated displacement exceeds the configured delta threshold.
@@ -251,7 +270,7 @@ class EncoderModule final : public Module
             for (uint8_t rotation_index = 0; rotation_index < kPPRMeasuredRotations; ++rotation_index)
             {
                 // Delays long enough for the index-pin trigger window to elapse before the next rotation is measured.
-                delay(100);
+                delay(kIndexSettleDelay);
 
                 while (!digitalReadFast(kPinX))
                 {
@@ -269,4 +288,4 @@ class EncoderModule final : public Module
         }
 };
 
-#endif  //AXMC_ENCODER_MODULE_H
+#endif  // SLMC_ENCODER_MODULE_H

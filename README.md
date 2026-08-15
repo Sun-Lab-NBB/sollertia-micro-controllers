@@ -20,20 +20,19 @@ general microcontroller framework provided by the
 hardware modules consumed by Sollertia platform data acquisition systems and exposed to the host PC through the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) runtime.
 
-The firmware is partitioned across microcontroller boards via preprocessor target macros in `main.cpp`; each board
-runs one firmware binary corresponding to one target. The current Mesoscope-VR acquisition system (the only consumer
-this project currently supports) uses three target classes: AMC-ACTOR, AMC-SENSOR, and AMC-ENCODER. The Actor
-interfaces with the hardware modules that control the experiment environment, for example, to deliver water, lock
-the running wheel, and activate Virtual Reality screens. The Sensor monitors most data-acquisition devices, such as
-the torque sensor, lick sensor, and Mesoscope frame timestamp sensor. The Encoder uses hardware interrupt logic to
-monitor the animal's movement using a rotary encoder and, due to interrupt logic constraints, is segmented into its
-own class of microcontrollers. This combination maximizes data acquisition speed while avoiding communication channel
-overloading. Future acquisition systems can define any other set of targets with any partitioning of the available
-modules across boards.
+The firmware is partitioned across microcontroller boards via preprocessor target macros in `main.cpp`. Each board runs
+one firmware binary corresponding to one target. The current Mesoscope-VR acquisition system (the only consumer this
+project currently supports) uses three target classes: ACTOR, SENSOR, and ENCODER. The Actor interfaces with the
+hardware modules that control the experiment environment, for example, to deliver water, lock the running wheel, and
+activate Virtual Reality screens. The Sensor monitors most data-acquisition devices, such as the torque sensor, lick
+sensor, and Mesoscope frame timestamp sensor. The Encoder uses hardware interrupt logic to monitor the animal's movement
+using a rotary encoder and, due to interrupt logic constraints, is segmented into its own class of microcontrollers.
+This combination maximizes data acquisition speed while avoiding communication channel overloading. Future acquisition
+systems can define any other set of targets with any partitioning of the available modules across boards.
 
-This project contains both the schematics for assembling the microcontrollers used by the Sollertia platform and the
-firmware that runs on those microcontrollers. The hardware created and programmed as part of this project is designed
-to be interfaced through the bindings available from the
+This repository contains the firmware that runs on the microcontrollers used by the Sollertia platform and links to the
+schematics for assembling them. The hardware created and programmed as part of this project is designed to be
+interfaced through the bindings available from the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library, which is a core dependency of every
 Sollertia platform acquisition system.
 
@@ -42,9 +41,10 @@ ___
 ## Table of Contents
 
 - [Dependencies](#dependencies)
-- [Hardware Assembly](#hardware-assembly)
-- [Software Installation](#software-installation)
-- [Per-Target Configuration](#per-target-configuration)
+- [Installation](#installation)
+  - [Hardware Assembly](#hardware-assembly)
+  - [Software Installation](#software-installation)
+  - [Per-Target Configuration](#per-target-configuration)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
 - [AI-Assisted Development](#ai-assisted-development)
@@ -69,20 +69,20 @@ These dependencies are automatically resolved whenever the project is installed 
 
 ___
 
-## Hardware Assembly
+## Installation
 
-To assemble the microcontroller hardware, consult the
-[schematics and instructions](https://drive.google.com/drive/folders/12gDWwI_88usMgt7qVo7e83FKYo45KZwz?usp=drive_link)
-reflecting the latest state of the Sollertia platform microcontroller hardware.
+### Hardware Assembly
+
+To assemble the microcontroller hardware, consult the [schematics and
+instructions](https://drive.google.com/drive/folders/12gDWwI_88usMgt7qVo7e83FKYo45KZwz?usp=drive_link) reflecting the
+latest state of the Sollertia platform microcontroller hardware.
 
 ***Note,*** the provided link only covers the microcontrollers and does not discuss the assembly of other
 experiment-facilitating devices used by each data acquisition system. Consult the
 [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library for details on assembling the other
 Sollertia platform data acquisition system components.
 
-___
-
-## Software Installation
+### Software Installation
 
 1. Download this repository to a local PC with direct USB access to the microcontrollers. Use the latest
    stable release from [GitHub](https://github.com/Sun-Lab-NBB/sollertia-micro-controllers/releases), as it always
@@ -97,17 +97,15 @@ ___
 6. Repeat steps 4 and 5 until all microcontrollers are configured.
 7. Connect all microcontrollers to the PC that will manage the data acquisition runtime (the main data-acquisition PC).
 
-___
-
-## Per-Target Configuration
+### Per-Target Configuration
 
 The firmware exposes a small set of compile-time identifiers that the companion host-PC runtime
 ([sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment)) must match. The defaults
 shipped with this project are:
 
 - **Controller IDs** (set in [main.cpp](src/main.cpp)): `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`.
-- **Keepalive interval**: `500` ms. The Kernel expects the host PC to send a keepalive message at least this often;
-  if it does not, the microcontroller resets to abort runtime.
+- **Keepalive interval**: `500` ms. The Kernel expects the host PC to send a keepalive message at least this often. If
+  it does not, the microcontroller resets to abort runtime.
 
 Adjust these values directly in `main.cpp` if a deployment needs different IDs or a different keepalive cadence,
 and make sure the host-PC configuration is updated to match.
@@ -133,17 +131,16 @@ ___
 Claude Code skills and AI development assets for this project are distributed through two marketplaces:
 
 - [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace:
-  - **experiment** plugin — the firmware-aware `/microcontroller-interface` skill, a registry of the paired
-    firmware Module and host-PC `ModuleInterface` classes and the cross-side contract they share. This is the entry
-    point for any change that spans this firmware and its
-    [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) consumer, and it links out to the
-    ataraxis plugins below for the underlying mechanics. The host-PC interface and configuration skills it
-    references belong to the consumer and are documented there.
+  - **experiment** plugin: the firmware-aware `/microcontroller-interface` skill, a registry of the paired firmware
+    Module and host-PC `ModuleInterface` classes and the cross-side contract they share. This is the entry point for any
+    change that spans this firmware and its [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment)
+    consumer, and it links out to the ataraxis plugins below for the underlying mechanics. The host-PC interface and
+    configuration skills it references belong to the consumer and are documented there.
 - [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace:
-  - **microcontroller** plugin — the foundational C++ firmware mechanics via the `/firmware-module` skill (base
-    `Module` subclass implementation: template parameters, parameter structs, status and command codes, and
-    stage-based command execution).
-  - **automation** plugin — shared development skills that enforce Sollertia platform coding conventions (C++ style,
+  - **microcontroller** plugin: the foundational C++ firmware mechanics via the `/firmware-module` skill (base `Module`
+    subclass implementation: template parameters, parameter structs, status and command codes, and stage-based command
+    execution).
+  - **automation** plugin: shared development skills that enforce Sollertia platform coding conventions (C++ style,
     README style, commit messages, Sphinx documentation, tox configuration) and general-purpose codebase exploration
     tools.
 

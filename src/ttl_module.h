@@ -5,8 +5,8 @@
  * hardware systems by sending or receiving TTL logic pulses.
  */
 
-#ifndef AXMC_TTL_MODULE_H
-#define AXMC_TTL_MODULE_H
+#ifndef SLMC_TTL_MODULE_H
+#define SLMC_TTL_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -105,8 +105,8 @@ class TTLModule final : public Module
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kInputOff));
             }
 
-            _custom_parameters.pulse_duration    = 10000;  // 10000 microseconds == 10 milliseconds.
-            _custom_parameters.average_pool_size = 0;      // 0 or 1 disables averaging.
+            _custom_parameters.pulse_duration    = kDefaultPulseDuration;
+            _custom_parameters.average_pool_size = kDefaultAveragePoolSize;
 
             // Realigns the change-detection state with the zero baseline reported above. The Kernel re-runs this
             // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
@@ -121,9 +121,15 @@ class TTLModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration   = 10000;  ///< The time, in microseconds, the pin outputs HIGH during pulses.
-                uint8_t average_pool_size = 0;  ///< The number of digital readouts to average when checking pin state.
+                uint32_t pulse_duration   = kDefaultPulseDuration;    ///< The HIGH output time, in microseconds.
+                uint8_t average_pool_size = kDefaultAveragePoolSize;  ///< The number of readouts averaged.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Stores the default TTL pulse duration, in microseconds. 10000 microseconds == 10 milliseconds.
+        static constexpr uint32_t kDefaultPulseDuration = 10000;
+
+        /// Stores the default number of readouts averaged when checking the pin state. 0 or 1 disables averaging.
+        static constexpr uint8_t kDefaultAveragePoolSize = 0;
 
         /// Determines whether the input pin was reading HIGH during the instance's previous state evaluation.
         bool _previous_input_status = false;
@@ -223,4 +229,4 @@ class TTLModule final : public Module
         }
 };
 
-#endif  //AXMC_TTL_MODULE_H
+#endif  // SLMC_TTL_MODULE_H
