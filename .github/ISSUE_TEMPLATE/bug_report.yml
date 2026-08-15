@@ -22,6 +22,7 @@ body:
         OS: Ubuntu 24.04
         PlatformIO: 6.1.15
         Board: Teensy 4.1
+        Firmware target: teensy41_sensor
     validations:
       required: true
 

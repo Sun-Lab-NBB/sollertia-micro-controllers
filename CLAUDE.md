@@ -283,6 +283,14 @@ tox -e docs                          # Build Sphinx + Doxygen API documentation
 tox -e deploy                        # Upload the built documentation to the project's Netlify site
 ```
 
+### Issue templates
+
+The `.github/ISSUE_TEMPLATE/` forms are a superset of the general ataraxis templates that `/project-layout` prescribes.
+They carry every field of the general form plus the fields this project needs to reproduce a report, currently the
+firmware target the affected board ran. Audit them by confirming that the general form's content is present, rather
+than by requiring an exact match against it, and add a project-specific field to the superset rather than replacing a
+general one.
+
 ### Workflow guidance
 
 **Adding a new hardware module to the firmware:**
