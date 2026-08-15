@@ -117,9 +117,9 @@ class EncoderModule final : public Module
 
             _overflow = 0;
 
-            _custom_parameters.report_ccw      = true;
-            _custom_parameters.report_cw       = false;
-            _custom_parameters.delta_threshold = 15;
+            _custom_parameters.report_ccw      = kDefaultReportCcw;
+            _custom_parameters.report_cw       = kDefaultReportCw;
+            _custom_parameters.delta_threshold = kDefaultDeltaThreshold;
 
             // Realigns the amortization caps with the threshold assigned above. The Kernel re-runs this method on
             // every controller reset and keepalive timeout, so the caps have to be restored alongside it.
@@ -137,10 +137,19 @@ class EncoderModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                bool report_ccw          = true;   ///< Determines whether to report rotation in the CCW direction.
-                bool report_cw           = false;  ///< Determines whether to report rotation in the CW direction.
-                uint32_t delta_threshold = 15;     ///< The minimum displacement change (delta) for reporting rotation.
+                bool report_ccw          = kDefaultReportCcw;       ///< Determines whether to report CCW rotation.
+                bool report_cw           = kDefaultReportCw;        ///< Determines whether to report CW rotation.
+                uint32_t delta_threshold = kDefaultDeltaThreshold;  ///< The minimum displacement change reported.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Determines whether the module reports counterclockwise (CCW) rotation by default.
+        static constexpr bool kDefaultReportCcw = true;
+
+        /// Determines whether the module reports clockwise (CW) rotation by default.
+        static constexpr bool kDefaultReportCw = false;
+
+        /// Stores the default minimum displacement change (delta), in encoder pulses, for reporting rotation.
+        static constexpr uint32_t kDefaultDeltaThreshold = 15;
 
         /// Stores the multiplier used to optionally invert the pulse counter sign to virtually flip the direction of
         /// encoder readouts.
@@ -148,6 +157,9 @@ class EncoderModule final : public Module
 
         /// The number of full encoder rotations to measure when estimating the Pulse-Per-Revolution (PPR) value.
         static constexpr uint8_t kPPRMeasuredRotations = 10;
+
+        /// Stores the delay, in milliseconds, that lets the index-pin trigger window elapse between rotations.
+        static constexpr uint16_t kIndexSettleDelay = 100;
 
         /// The encoder class that monitors the encoder's rotation. Must be initialized statically; deferred
         /// initialization causes a runtime crash.
@@ -258,7 +270,7 @@ class EncoderModule final : public Module
             for (uint8_t rotation_index = 0; rotation_index < kPPRMeasuredRotations; ++rotation_index)
             {
                 // Delays long enough for the index-pin trigger window to elapse before the next rotation is measured.
-                delay(100);
+                delay(kIndexSettleDelay);
 
                 while (!digitalReadFast(kPinX))
                 {

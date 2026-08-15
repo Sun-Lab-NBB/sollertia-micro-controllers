@@ -78,7 +78,7 @@ class ScreenModule final : public Module
             // Notifies the PC about the initial state of the FET gates.
             SendData(static_cast<uint8_t>(kCustomStatusCodes::kOff));
 
-            _custom_parameters.pulse_duration = 500000;  // 500000 microseconds == 500 milliseconds.
+            _custom_parameters.pulse_duration = kDefaultPulseDuration;
 
             return true;
         }
@@ -89,8 +89,11 @@ class ScreenModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration = 500000;  ///< The time, in microseconds, the button-press signal is held.
+                uint32_t pulse_duration = kDefaultPulseDuration;  ///< The button-press hold time, in microseconds.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Stores the default button-press signal duration, in microseconds. 500000 microseconds == 500 milliseconds.
+        static constexpr uint32_t kDefaultPulseDuration = 500000;
 
         /// Stores the digital signal that needs to be sent to the output pin to simulate pressing the screens' power
         /// button.

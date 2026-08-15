@@ -154,12 +154,11 @@ class ValveModule final : public Module
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kOpen));
             }
 
-            _custom_parameters.pulse_duration    = 39410;  // 39410 microseconds == 5.0 uL in the reference rig.
-            _custom_parameters.calibration_count = 200;    // 200 pulses per calibration burst.
+            _custom_parameters.pulse_duration    = kDefaultPulseDuration;
+            _custom_parameters.calibration_count = kDefaultCalibrationCount;
 
             // Tone duration is only meaningful when the tone pin is configured.
-            // 300000 microseconds == 300 milliseconds.
-            if constexpr (kToneEnabled) _custom_parameters.tone_duration = 300000;
+            if constexpr (kToneEnabled) _custom_parameters.tone_duration = kDefaultToneDuration;
             else _custom_parameters.tone_duration = 0;
 
             ResolveToneTimeDelta();
@@ -173,10 +172,19 @@ class ValveModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                uint32_t pulse_duration    = 39410;   ///< The time, in microseconds, to keep the valve open.
-                uint16_t calibration_count = 200;     ///< The number of times to pulse the valve during calibration.
-                uint32_t tone_duration     = 300000;  ///< The time, in microseconds, to keep playing the tone.
+                uint32_t pulse_duration    = kDefaultPulseDuration;     ///< The valve open time, in microseconds.
+                uint16_t calibration_count = kDefaultCalibrationCount;  ///< The number of calibration pulses.
+                uint32_t tone_duration     = kDefaultToneDuration;      ///< The tone play time, in microseconds.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Stores the default pulse duration, in microseconds. 39410 microseconds == 5.0 uL in the reference rig.
+        static constexpr uint32_t kDefaultPulseDuration = 39410;
+
+        /// Stores the default number of valve pulses delivered during a single calibration burst.
+        static constexpr uint16_t kDefaultCalibrationCount = 200;
+
+        /// Stores the default tone duration, in microseconds. 300000 microseconds == 300 milliseconds.
+        static constexpr uint32_t kDefaultToneDuration = 300000;
 
         /// Determines whether the instance manages a piezoelectric tone buzzer.
         static constexpr bool kToneEnabled = kTonePin != kUnusedTonePin;  // NOLINT(*-dynamic-static-initializers)

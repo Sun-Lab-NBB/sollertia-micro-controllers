@@ -20,11 +20,23 @@
 
 Communication axmc_communication(Serial);  // NOLINT(*-interfaces-global-init)
 
-static constexpr uint32_t kKeepaliveInterval = 500;  // 500 milliseconds.
+/// Stores the interval, in milliseconds, at which the host PC has to send keepalive messages to the controller.
+static constexpr uint32_t kKeepaliveInterval = 500;
+
+/// Stores the baud rate of the serial connection with the host PC. Teensy boards ignore this value.
+static constexpr uint32_t kSerialBaudRate = 115200;
+
+/// Stores the Analog-to-Digital Converter (ADC) resolution, in bits. The 12-bit setting produces the 0 to 4095
+/// readout range that keeps the analog sensor readouts clean.
+static constexpr uint8_t kAnalogReadResolution = 12;
 
 // Defines the target microcontroller. The reference VR system currently has 3 valid targets: ACTOR, SENSOR, ENCODER.
 #define ACTOR
 
+// The literals in the target blocks below are hardware assignments: digital and analog pin numbers, module type
+// codes, per-controller instance IDs, and the torque sensor's ADC baseline. A named constant would restate the
+// number without adding meaning, so the magic-number check is suppressed across the whole selection block.
+// NOLINTBEGIN(*-magic-numbers)
 #ifdef ACTOR
 #include "brake_module.h"
 #include "screen_module.h"
@@ -57,15 +69,15 @@ Module* modules[] = {&wheel_encoder};
 #else
 static_assert(false, "Define one of the supported microcontroller targets (ACTOR, SENSOR, ENCODER).");
 #endif
+// NOLINTEND(*-magic-numbers)
 
 Kernel axmc_kernel(kControllerID, axmc_communication, modules, kKeepaliveInterval);
 
 void setup()
 {
-    Serial.begin(115200);  // The baudrate is ignored for Teensy boards.
+    Serial.begin(kSerialBaudRate);
 
-    // Configures the ADC for 12-bit resolution (0-4095), which produces clean readouts for the analog sensors.
-    analogReadResolution(12);
+    analogReadResolution(kAnalogReadResolution);
 
     axmc_kernel.Setup();
 }

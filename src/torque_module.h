@@ -73,11 +73,11 @@ class TorqueModule final : public Module
         {
             pinMode(kPin, INPUT);
 
-            _custom_parameters.report_ccw        = true;
-            _custom_parameters.report_cw         = true;
-            _custom_parameters.signal_threshold  = 150;
-            _custom_parameters.delta_threshold   = 100;
-            _custom_parameters.average_pool_size = 4;
+            _custom_parameters.report_ccw        = kDefaultReportCcw;
+            _custom_parameters.report_cw         = kDefaultReportCw;
+            _custom_parameters.signal_threshold  = kDefaultSignalThreshold;
+            _custom_parameters.delta_threshold   = kDefaultDeltaThreshold;
+            _custom_parameters.average_pool_size = kDefaultAveragePoolSize;
 
             // Realigns the change-detection state with the zero baseline reported below. The Kernel re-runs this
             // method on every controller reset and keepalive timeout, so the state has to be restored alongside it.
@@ -96,12 +96,27 @@ class TorqueModule final : public Module
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
-                bool report_ccw           = true;  ///< Determines whether to report changes in the CCW direction.
-                bool report_cw            = true;  ///< Determines whether to report changes in the CW direction.
-                uint16_t signal_threshold = 150;   ///< The minimum rescaled torque magnitude reported to the PC.
-                uint16_t delta_threshold  = 100;   ///< The minimum signal difference to report torque changes.
-                uint8_t average_pool_size = 4;     ///< The number of readouts to average when computing torque.
+                bool report_ccw           = kDefaultReportCcw;        ///< Determines whether to report CCW changes.
+                bool report_cw            = kDefaultReportCw;         ///< Determines whether to report CW changes.
+                uint16_t signal_threshold = kDefaultSignalThreshold;  ///< The minimum torque magnitude reported.
+                uint16_t delta_threshold  = kDefaultDeltaThreshold;   ///< The minimum signal difference reported.
+                uint8_t average_pool_size = kDefaultAveragePoolSize;  ///< The number of readouts averaged.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Determines whether the instance reports torque changes in the counterclockwise (CCW) direction by default.
+        static constexpr bool kDefaultReportCcw = true;
+
+        /// Determines whether the instance reports torque changes in the clockwise (CW) direction by default.
+        static constexpr bool kDefaultReportCw = true;
+
+        /// Stores the default minimum rescaled torque magnitude reported to the PC, in 12-bit ADC units.
+        static constexpr uint16_t kDefaultSignalThreshold = 150;
+
+        /// Stores the default minimum signal difference required to report torque changes, in 12-bit ADC units.
+        static constexpr uint16_t kDefaultDeltaThreshold = 100;
+
+        /// Stores the default number of readouts to average when computing the reported torque value.
+        static constexpr uint8_t kDefaultAveragePoolSize = 4;
 
         /// Stores the raw signal readout that the next delta comparison measures against, updated only when a
         /// readout clears the delta threshold.
