@@ -4,7 +4,7 @@
 project = 'sollertia-micro-controllers'
 copyright = '2026, Sun (NeuroAI) lab'
 author = 'Ivan Kondratyev'
-release = '4.0.0'
+release = '5.0.0'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
