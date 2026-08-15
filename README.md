@@ -97,6 +97,10 @@ Sollertia platform data acquisition system components.
 6. Repeat steps 4 and 5 until all microcontrollers are configured.
 7. Connect all microcontrollers to the PC that will manage the data acquisition runtime (the main data-acquisition PC).
 
+***Warning!*** Always name the environment when uploading, as in `pio run -e teensy41_actor -t upload`. An upload
+command that omits the environment processes every environment in turn, flashing the connected board with each target
+firmware and leaving it running the last one.
+
 ### Per-Target Configuration
 
 The firmware exposes a small set of compile-time identifiers that the companion host-PC runtime

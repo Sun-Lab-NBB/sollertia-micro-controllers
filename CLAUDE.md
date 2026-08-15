@@ -261,7 +261,8 @@ targeting the Teensy 4.1 board used by the Mesoscope-VR deployment:
 
 Each environment extends the shared `[teensy41_base]` template and appends its target macro to `build_flags`. Running
 `pio run` without `-e` compiles all three targets, so a break in a target other than the one being flashed fails the
-build. Only one board must be connected to the host PC at upload time.
+build. Only one board must be connected to the host PC at upload time. An upload MUST name its environment, because
+an upload command without `-e` flashes the connected board once per environment and leaves it running the last one.
 
 ***Exemption from `/platformio-config`:*** that skill mandates one `[env:<board>]` section named for the board, which
 assumes the library archetype where the board is the only build axis. This firmware carries a second axis, the
