@@ -166,10 +166,10 @@ within the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) platform, which
 ### Architecture
 
 - **Multi-target firmware**: `main.cpp` uses preprocessor `#ifdef` blocks to select which `Module` subclass
-  instances are compiled into the firmware. Exactly one target macro is defined at upload time. The current
-  Mesoscope-VR deployment defines three targets (`ACTOR`, `SENSOR`, `ENCODER`) and requires all three target
-  firmwares running on three separate boards. A different acquisition system could define any other set of targets
-  with any partitioning of the available modules across boards.
+  instances are compiled into the firmware. Each PlatformIO environment defines exactly one target macro through its
+  build flags. The current Mesoscope-VR deployment defines three targets (`ACTOR`, `SENSOR`, `ENCODER`) and requires
+  all three target firmwares running on three separate boards. A different acquisition system could define any other
+  set of targets with any partitioning of the available modules across boards.
 - **Per-target controller IDs**: assigned per acquisition system in `main.cpp`. The current Mesoscope-VR
   deployment uses `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`. These IDs are part of the contract with the
   consuming acquisition system's binding classes in `sollertia-experiment`.
@@ -250,27 +250,36 @@ target). The table below shows the current Mesoscope-VR deployment's assignments
 
 ### Build system
 
-This is a PlatformIO firmware project. `platformio.ini` defines a single environment, currently targeting the
-Teensy 4.1 board used by the Mesoscope-VR deployment:
+This is a PlatformIO firmware project. `platformio.ini` defines one environment per controller target, all currently
+targeting the Teensy 4.1 board used by the Mesoscope-VR deployment:
 
-| Environment | Board      | Platform | Monitor speed |
-|-------------|------------|----------|---------------|
-| `teensy41`  | Teensy 4.1 | teensy   | 115200        |
+| Environment        | Board      | Platform | Target macro | Monitor speed |
+|--------------------|------------|----------|--------------|---------------|
+| `teensy41_actor`   | Teensy 4.1 | teensy   | `ACTOR`      | 115200        |
+| `teensy41_sensor`  | Teensy 4.1 | teensy   | `SENSOR`     | 115200        |
+| `teensy41_encoder` | Teensy 4.1 | teensy   | `ENCODER`    | 115200        |
 
-The target controller is selected at compile time by modifying the `#define` macro on line 26 of `src/main.cpp`
-before each upload. Only one board must be connected to the host PC at upload time.
+Each environment extends the shared `[teensy41_base]` template and appends its target macro to `build_flags`. Running
+`pio run` without `-e` compiles all three targets, so a break in a target other than the one being flashed fails the
+build. Only one board must be connected to the host PC at upload time.
 
-Adding support for a new board family is a `platformio.ini` change (new environment) plus any board-specific
-adjustments to pin assignments in the consumer's `main.cpp` target block.
+***Exemption from `/platformio-config`:*** that skill mandates one `[env:<board>]` section named for the board, which
+assumes the library archetype where the board is the only build axis. This firmware carries a second axis, the
+controller target, so its environments are named `<board>_<target>` and share the non-buildable `[teensy41_base]`
+template that holds every field common to them. Preserve this layout when editing `platformio.ini`.
+
+Adding support for a new board family is a `platformio.ini` change (a new base template plus one environment per
+target) and any board-specific adjustments to pin assignments in the consumer's `main.cpp` target block.
 
 ### Development commands
 
 ```bash
-pio run                          # Compile firmware for the active target macro in main.cpp
-pio run -t upload                # Compile and flash to the connected board
-pio check                        # Run static analysis (cppcheck)
-tox -e docs                      # Build Sphinx + Doxygen API documentation
-tox -e deploy                    # Upload the built documentation to the project's Netlify site
+pio run                              # Compile every target firmware (the build regression gate)
+pio run -e teensy41_actor            # Compile a single target
+pio run -e teensy41_actor -t upload  # Compile and flash one target to the connected board
+pio check                            # Run clang-tidy static analysis across every target
+tox -e docs                          # Build Sphinx + Doxygen API documentation
+tox -e deploy                        # Upload the built documentation to the project's Netlify site
 ```
 
 ### Workflow guidance
