@@ -8,8 +8,8 @@
  * compatible with other interrupt libraries.
  */
 
-#ifndef AXMC_ENCODER_MODULE_H
-#define AXMC_ENCODER_MODULE_H
+#ifndef SLMC_ENCODER_MODULE_H
+#define SLMC_ENCODER_MODULE_H
 
 // This definition must precede Encoder.h inclusion. It increases the resolution of the encoder, but interferes with
 // any other library that makes use of AttachInterrupt().
@@ -126,10 +126,7 @@ class EncoderModule final : public Module
             ResolveAmortizationCaps();
 
             // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
-            SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW),
-                static_cast<uint32_t>(0)
-            );
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW), static_cast<uint32_t>(0));
 
             return true;
         }
@@ -279,4 +276,4 @@ class EncoderModule final : public Module
         }
 };
 
-#endif  //AXMC_ENCODER_MODULE_H
+#endif  // SLMC_ENCODER_MODULE_H

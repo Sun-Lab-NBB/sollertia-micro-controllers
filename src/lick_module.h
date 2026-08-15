@@ -4,8 +4,8 @@
  * @brief Provides the LickModule class that monitors and records the data produced by a conductive lick sensor.
  */
 
-#ifndef AXMC_LICK_MODULE_H
-#define AXMC_LICK_MODULE_H
+#ifndef SLMC_LICK_MODULE_H
+#define SLMC_LICK_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -130,10 +130,7 @@ class LickModule final : public Module
             // zero, to mark the end of an above-threshold event without spamming the PC.
             else if (!_previous_zero)
             {
-                SendData(
-                    static_cast<uint8_t>(kCustomStatusCodes::kChanged),
-                    static_cast<uint16_t>(0)
-                );
+                SendData(static_cast<uint8_t>(kCustomStatusCodes::kChanged), static_cast<uint16_t>(0));
                 _previous_zero = true;
             }
 
@@ -141,4 +138,4 @@ class LickModule final : public Module
         }
 };
 
-#endif  //AXMC_LICK_MODULE_H
+#endif  // SLMC_LICK_MODULE_H

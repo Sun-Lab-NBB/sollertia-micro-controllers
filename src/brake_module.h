@@ -4,8 +4,8 @@
  * @brief Provides the BrakeModule class that controls an electromagnetic particle brake.
  */
 
-#ifndef AXMC_BRAKE_MODULE_H
-#define AXMC_BRAKE_MODULE_H
+#ifndef SLMC_BRAKE_MODULE_H
+#define SLMC_BRAKE_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -63,8 +63,7 @@ class BrakeModule final : public Module
             {
                 // Inverts the PWM value when the brake is normally engaged, so that strength 255 always means the brake
                 // is fully engaged regardless of the relay's idle state.
-                if (kNormallyEngaged)
-                    _custom_parameters.braking_strength = 255 - _custom_parameters.braking_strength;
+                if (kNormallyEngaged) _custom_parameters.braking_strength = 255 - _custom_parameters.braking_strength;
                 return true;
             }
             return false;
@@ -120,22 +119,21 @@ class BrakeModule final : public Module
         ~BrakeModule() override = default;
 
     private:
-        /// Stores the braking_strength value that engages the brake at maximum strength, expressed in the inverted
-        /// frame SetCustomParameters() stores. Driving it as a digital level is electrically identical to driving it
-        /// as a duty cycle, so the two extremes stay on the GPIO peripheral. Declared before the parameter structure
-        /// that defaults to it, as an enclosing-class constant is not in scope inside a nested default initializer.
-        static constexpr uint8_t kFullEngageDuty = kNormallyEngaged ? 0 : 255;  // NOLINT(*-dynamic-static-initializers)
-
-        /// Stores the braking_strength value that disengages the brake, expressed in the same inverted frame.
-        static constexpr uint8_t kFullDisengageDuty =
-            kNormallyEngaged ? 255 : 0;  // NOLINT(*-dynamic-static-initializers)
-
         /// Stores the instance's addressable runtime parameters.
         struct CustomRuntimeParameters
         {
                 uint8_t braking_strength = kFullEngageDuty;  ///< Determines the strength of the brake in variable mode.
                 uint32_t pulse_duration  = 1000000;  ///< The time, in microseconds, to engage the brake during pulses.
         } PACKED_STRUCT _custom_parameters;
+
+        /// Stores the braking_strength value that engages the brake at maximum strength, expressed in the inverted
+        /// frame SetCustomParameters() stores. Driving it as a digital level is electrically identical to driving it
+        /// as a duty cycle, so the two extremes stay on the GPIO peripheral.
+        static constexpr uint8_t kFullEngageDuty = kNormallyEngaged ? 0 : 255;  // NOLINT(*-dynamic-static-initializers)
+
+        /// Stores the braking_strength value that disengages the brake, expressed in the same inverted frame.
+        static constexpr uint8_t kFullDisengageDuty =
+            kNormallyEngaged ? 255 : 0;  // NOLINT(*-dynamic-static-initializers)
 
         /// Stores the digital signal that needs to be sent to the output pin to engage the brake at maximum strength.
         static constexpr bool kEngage = kNormallyEngaged ? LOW : HIGH;  // NOLINT(*-dynamic-static-initializers)
@@ -245,4 +243,4 @@ class BrakeModule final : public Module
         }
 };
 
-#endif  //AXMC_BRAKE_MODULE_H
+#endif  // SLMC_BRAKE_MODULE_H

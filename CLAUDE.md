@@ -9,7 +9,7 @@ This ensures you:
 - Understand the project architecture before modifying code
 - Follow existing patterns and conventions
 - Do not introduce inconsistencies or break integrations with downstream consumers of this firmware library
-  (currently the Mesoscope-VR acquisition system in sollertia-experiment; future acquisition systems will consume
+  (currently the Mesoscope-VR acquisition system in sollertia-experiment, with future acquisition systems consuming
   the same firmware library)
 
 ## Style guide compliance
@@ -74,24 +74,24 @@ which acquisition system consumes the firmware, are:
 | `experiment:microcontroller-interface` | Paired firmware Module + host-PC `ModuleInterface` contract registry |
 
 The Sollertia platform's development and style skills required for routine changes ship in the ataraxis marketplace's
-`automation` plugin; invoke them as directed by the "Session start behavior" and "Style guide compliance" sections
+`automation` plugin. Invoke them as directed by the "Session start behavior" and "Style guide compliance" sections
 above.
 
 Everything else this firmware touches lives on the consumer side. The sollertia marketplace's `experiment` plugin and
 the downstream [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) (sle) library own the
 host-PC interface wrappers, the acquisition-system binding classes, and the per-system configuration and runtime
-surface; the `experiment:microcontroller-interface` skill links out to the ataraxis `communication` plugin for the
+surface. The `experiment:microcontroller-interface` skill links out to the ataraxis `communication` plugin for the
 base host-PC `ModuleInterface` API. This consumer surface changes per acquisition system (Mesoscope-VR is the only
 current consumer), so this file does not enumerate it. When a change reaches the consumer side, inspect the
 `experiment` plugin's skills and the `sollertia-experiment` library to determine which are currently relevant.
 
 **Canonical reading order when adding or modifying a firmware module:**
-1. `experiment:microcontroller-interface` — the cross-repo paired Module + Interface contract; allocate the new
+1. `experiment:microcontroller-interface` covers the cross-repo paired Module + Interface contract. Allocate the new
    module type code and follow the slmc firmware + sle wrapper conventions it documents.
-2. `microcontroller:firmware-module` — the base C++ `Module` subclass mechanics that the skill above extends.
+2. `microcontroller:firmware-module` covers the base C++ `Module` subclass mechanics that the skill above extends.
 3. For consumer-side changes (binding classes, system configuration, post-flash hardware setup), consult the
-   `experiment` plugin and the `sollertia-experiment` library for the consuming acquisition system's current surface
-   — Mesoscope-VR today, but a future consumer would expose its own skills.
+   `experiment` plugin and the `sollertia-experiment` library for the consuming acquisition system's current surface,
+   which is Mesoscope-VR today. A future consumer would expose its own skills.
 
 ***Note,*** the sollertia `experiment` and `mesoscope` plugins may be unavailable on hosts where the sollertia
 marketplace is not installed (the live `available-skills` list will not include any `experiment:*` or `mesoscope:*`
@@ -103,7 +103,7 @@ files directly when the slash-command form is not available.
 This firmware lives on one end of a two-repository contract with `sollertia-experiment`, which owns the host-PC
 `ModuleInterface` wrappers (system-agnostic, in `src/sollertia_experiment/cross_system/module_interfaces.py`)
 and the per-acquisition-system binding classes and configuration dataclasses. The current consumer is the
-Mesoscope-VR system; its binding classes and `MesoscopeMicroControllers` configuration dataclass live in
+Mesoscope-VR system. Its binding classes and `MesoscopeMicroControllers` configuration dataclass live in
 `src/sollertia_experiment/mesoscope_vr/`.
 
 Any change to a `Module` subclass's parameter structure, status codes, command codes, controller IDs, keepalive
@@ -133,9 +133,9 @@ interval, or per-target module layout MUST be synchronized with the correspondin
   allows 1-255 with 0 reserved by the runtime to signal "no active command".
 - `CustomRuntimeParameters` struct layout, field names, and units (one struct per module)
 - Module template parameters (e.g., `EncoderModule<kPinA, kPinB, kPinX, kInvertDirection>`)
-- Controller IDs (currently `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203` for the Mesoscope-VR consumer; a future
-  consumer would have its own assignments)
-- Keepalive interval (`kKeepaliveInterval`, currently 500 ms — Mesoscope-VR's chosen cadence)
+- Controller IDs (currently `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203` for the Mesoscope-VR consumer, with a
+  future consumer having its own assignments)
+- Keepalive interval (`kKeepaliveInterval`, currently 500 ms, which is Mesoscope-VR's chosen cadence)
 - Per-target module layout (which `Module` subclass instances live on which controller for each acquisition
   system) and module `(type, id)` assignments
 
@@ -150,7 +150,7 @@ interval, or per-target module layout MUST be synchronized with the correspondin
 This is **sollertia-micro-controllers**, a C++17 PlatformIO firmware library that specializes the general
 microcontroller framework provided by `ataraxis-micro-controller` into the concrete hardware modules used by
 Sollertia platform data acquisition systems. The firmware is Arduino-compatible at the framework level and is
-not locked to any single board family; the current deployment targets Teensy 4.1 boards because that is the
+not locked to any single board family. The current deployment targets Teensy 4.1 boards because that is the
 hardware the only currently-supported consumer (the Mesoscope-VR acquisition system) uses. Modules are exposed
 to the host PC through the [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) runtime
 within the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) platform, which is built on the
@@ -168,15 +168,15 @@ within the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) platform, which
 - **Multi-target firmware**: `main.cpp` uses preprocessor `#ifdef` blocks to select which `Module` subclass
   instances are compiled into the firmware. Exactly one target macro is defined at upload time. The current
   Mesoscope-VR deployment defines three targets (`ACTOR`, `SENSOR`, `ENCODER`) and requires all three target
-  firmwares running on three separate boards; a different acquisition system could define any other set of targets
+  firmwares running on three separate boards. A different acquisition system could define any other set of targets
   with any partitioning of the available modules across boards.
 - **Per-target controller IDs**: assigned per acquisition system in `main.cpp`. The current Mesoscope-VR
   deployment uses `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`. These IDs are part of the contract with the
   consuming acquisition system's binding classes in `sollertia-experiment`.
 - **Keepalive watchdog**: `kKeepaliveInterval = 500` ms in the current deployment. The Kernel expects the host PC
-  to send a keepalive message at least this often; if it does not, the microcontroller emergency-resets to abort
+  to send a keepalive message at least this often. If it does not, the microcontroller emergency-resets to abort
   runtime. The interval is doubled internally by the Kernel to tolerate brief communication lapses. The value is
-  shared across all targets; a future consumer would pick its own value.
+  shared across all targets, and a future consumer would pick its own value.
 - **One `Module` subclass per hardware role**: Seven headers under `src/` (brake, encoder, lick, screen, torque,
   ttl, valve) each declare a `final` class that inherits from `ataraxis-micro-controller`'s `Module` base. Each
   implements three pure virtual methods (`SetupModule`, `SetCustomParameters`, `RunActiveCommand`) and exposes
@@ -185,13 +185,13 @@ within the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) platform, which
 ### Core components
 
 The Mesoscope-VR column below shows where each module is instantiated under the current Mesoscope-VR deployment.
-A future acquisition system could partition these modules differently — every module in this table is
+A future acquisition system could partition these modules differently, because every module in this table is
 platform-general and consumable by any target.
 
 | Component       | File               | Purpose                                                          | Mesoscope-VR target |
 |-----------------|--------------------|------------------------------------------------------------------|---------------------|
 | `BrakeModule`   | `brake_module.h`   | Controls electromagnetic particle brake on the running wheel     | ACTOR               |
-| `ValveModule`   | `valve_module.h`   | Drives solenoid valve (water reward + tone buzzer; gas puff)     | ACTOR               |
+| `ValveModule`   | `valve_module.h`   | Drives solenoid valve (water reward + tone buzzer, gas puff)     | ACTOR               |
 | `ScreenModule`  | `screen_module.h`  | Pulses VR screen power-board FET gates                           | ACTOR               |
 | `LickModule`    | `lick_module.h`    | Monitors conductive lick sensor voltage                          | SENSOR              |
 | `TorqueModule`  | `torque_module.h`  | Monitors AD620-amplified torque sensor on the running wheel      | SENSOR              |
@@ -201,7 +201,7 @@ platform-general and consumable by any target.
 
 ### Module type and ID assignments
 
-Module type codes (`module_type` argument to each `Module` constructor) are assigned per hardware role; they MUST
+Module type codes (`module_type` argument to each `Module` constructor) are assigned per hardware role, and they MUST
 not be reused across slmc. Each module also carries a `module_id` to disambiguate multiple instances of the same
 type on the same controller (currently used only for the two `ValveModule` instances on Mesoscope-VR's ACTOR
 target). The table below shows the current Mesoscope-VR deployment's assignments.
@@ -219,7 +219,7 @@ target). The table below shows the current Mesoscope-VR deployment's assignments
 ### Key patterns
 
 - **Header-only modules**: All `Module` subclasses live in `.h` files under `src/`. There are no `.cpp` files for
-  modules; everything is template-instantiated at compile time from `main.cpp`.
+  modules, and everything is template-instantiated at compile time from `main.cpp`.
 - **Template-parameterized pin assignments**: Each module class is a template with pin and behavior parameters
   (e.g., `BrakeModule<kPin, kNormallyEngaged, kStartEngaged>`). `main.cpp` instantiates each module with
   target-specific values.
@@ -235,7 +235,7 @@ target). The table below shows the current Mesoscope-VR deployment's assignments
   subclasses by `ataraxis-micro-controller`.
 - **LED-pin static_assert**: Every module class opens with `static_assert` blocks that reject `LED_BUILTIN` for each
   of its pin template parameters, preventing accidental reuse of the LED pin for hardware control.
-- **Library-prefixed include guards**: All headers use `AXMC_<NAME>_MODULE_H` include guards.
+- **Library-prefixed include guards**: All headers use `SLMC_<NAME>_MODULE_H` include guards.
 - **`get_active_command()` and `get_command_stage()` accessors**: Base-class accessors (snake_case) are called from
   each module's `RunActiveCommand()` dispatch switch and from stage-based command implementations.
 
@@ -287,7 +287,7 @@ tox -e deploy                    # Upload the built documentation to the project
 3. Write the new header in `src/<module>_module.h` following the slmc conventions documented in
    `experiment:microcontroller-interface`'s "slmc firmware conventions" section.
 4. Add the module's `#include` and instantiation block to the appropriate target in `src/main.cpp` (for the
-   current Mesoscope-VR deployment, this means choosing one of ACTOR / SENSOR / ENCODER; for a different
+   current Mesoscope-VR deployment, this means choosing one of ACTOR / SENSOR / ENCODER, and for a different
    consumer, the choice depends on that system's target layout). Add the new instance to the
    `Module* modules[]` array for that target.
 5. Add the new header to `Doxyfile`'s `INPUT` list and to `docs/source/api.rst` for documentation coverage.
@@ -311,8 +311,8 @@ tox -e deploy                    # Upload the built documentation to the project
    `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/system.py`) before making changes.
    Cross-repository drift is a runtime hazard.
 3. Make the firmware change, bump the slmc version, and coordinate companion changes via
-   `experiment:microcontroller-interface` (wrapper-side) and the consumer's instance skill (binding-side; for
-   Mesoscope-VR, `mesoscope:mesoscope-vr`).
+   `experiment:microcontroller-interface` (wrapper-side) and the consumer's instance skill (binding-side, which for
+   Mesoscope-VR is `mesoscope:mesoscope-vr`).
 4. Re-flash all affected boards (a parameter-struct change typically affects only the one target that hosts the
    module, but a status-code change may ripple across PC-side log processing).
 
@@ -335,11 +335,11 @@ tox -e deploy                    # Upload the built documentation to the project
 
 **Important considerations:**
 
-- Module type codes are `uint8_t`; the `(type, id)` pair must be unique across all modules on a single controller.
+- Module type codes are `uint8_t`, and the `(type, id)` pair must be unique across all modules on a single controller.
 - Controller IDs are `uint8_t`. The `Kernel` accepts values 1 through 255 and reserves 0, requiring each ID to be
   unique across concurrently-connected microcontrollers. The current Mesoscope-VR deployment uses 101 / 152 / 203.
   Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
   coordinate any new ID choice with the consuming acquisition system.
-- Pin selection must avoid `LED_BUILTIN`; the per-module `static_assert` enforces this at compile time.
-- Calibration commands (`ValveModule::Calibrate`, `EncoderModule::GetPPR`) intentionally block the runtime; they
+- Pin selection must avoid `LED_BUILTIN`, and the per-module `static_assert` enforces this at compile time.
+- Calibration commands (`ValveModule::Calibrate`, `EncoderModule::GetPPR`) intentionally block the runtime, and they
   must never run during an active acquisition session. Their Doxygen `@warning` blocks document this.

@@ -5,8 +5,8 @@
  * hardware systems by sending or receiving TTL logic pulses.
  */
 
-#ifndef AXMC_TTL_MODULE_H
-#define AXMC_TTL_MODULE_H
+#ifndef SLMC_TTL_MODULE_H
+#define SLMC_TTL_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -223,4 +223,4 @@ class TTLModule final : public Module
         }
 };
 
-#endif  //AXMC_TTL_MODULE_H
+#endif  // SLMC_TTL_MODULE_H

@@ -4,8 +4,8 @@
  * @brief Provides the ValveModule class that controls a solenoid valve and, optionally, a piezoelectric tone buzzer.
  */
 
-#ifndef AXMC_VALVE_MODULE_H
-#define AXMC_VALVE_MODULE_H
+#ifndef SLMC_VALVE_MODULE_H
+#define SLMC_VALVE_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -364,4 +364,4 @@ class ValveModule final : public Module
         }
 };
 
-#endif  //AXMC_VALVE_MODULE_H
+#endif  // SLMC_VALVE_MODULE_H

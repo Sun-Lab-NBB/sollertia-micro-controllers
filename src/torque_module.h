@@ -4,8 +4,8 @@
  * @brief Provides the TorqueModule class that monitors and records the data produced by a reaction torque sensor.
  */
 
-#ifndef AXMC_TORQUE_MODULE_H
-#define AXMC_TORQUE_MODULE_H
+#ifndef SLMC_TORQUE_MODULE_H
+#define SLMC_TORQUE_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -85,10 +85,7 @@ class TorqueModule final : public Module
             _previous_zero    = true;
 
             // Notifies the PC about the initial sensor state. Direction is arbitrary for the zero-value baseline.
-            SendData(
-                static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
-                static_cast<uint16_t>(0)
-            );
+            SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), static_cast<uint16_t>(0));
 
             return true;
         }
@@ -160,10 +157,7 @@ class TorqueModule final : public Module
             {
                 if (!_previous_zero)
                 {
-                    SendData(
-                        static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque),
-                        static_cast<uint16_t>(0)
-                    );
+                    SendData(static_cast<uint8_t>(kCustomStatusCodes::kCCWTorque), static_cast<uint16_t>(0));
                     _previous_zero = true;
                 }
             }
@@ -189,4 +183,4 @@ class TorqueModule final : public Module
         }
 };
 
-#endif  //AXMC_TORQUE_MODULE_H
+#endif  // SLMC_TORQUE_MODULE_H

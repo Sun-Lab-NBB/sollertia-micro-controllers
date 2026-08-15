@@ -5,8 +5,8 @@
  * Virtual Reality system.
  */
 
-#ifndef AXMC_SCREEN_MODULE_H
-#define AXMC_SCREEN_MODULE_H
+#ifndef SLMC_SCREEN_MODULE_H
+#define SLMC_SCREEN_MODULE_H
 
 #include <Arduino.h>
 #include <module.h>
@@ -131,4 +131,4 @@ class ScreenModule final : public Module
         }
 };
 
-#endif  //AXMC_SCREEN_MODULE_H
+#endif  // SLMC_SCREEN_MODULE_H

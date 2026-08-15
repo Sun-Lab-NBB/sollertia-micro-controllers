@@ -10,9 +10,9 @@ OUTPUT_DIRECTORY       = docs/source/doxygen
 OUTPUT_LANGUAGE        = English
 INPUT                  = src/brake_module.h \
                          src/encoder_module.h \
+                         src/lick_module.h \
                          src/screen_module.h \
                          src/torque_module.h \
-                         src/lick_module.h \
                          src/ttl_module.h \
                          src/valve_module.h
 GENERATE_XML           = YES
