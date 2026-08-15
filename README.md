@@ -90,9 +90,9 @@ Sollertia platform data acquisition system components.
 2. Open the project in the 'PlatformIO' IDE.
 3. Optionally disable all hardware modules not used by the target acquisition system. This project is intended to be
    reused by all Sollertia platform acquisition systems, so it contains all hardware modules the platform supports.
-4. Connect a ***single*** microcontroller to the host PC and select the microcontroller type by modifying the
-   preprocessor directive on line 26 of the [main.cpp](src/main.cpp). Do ***NOT*** connect more than a single controller
-   at a time, as some systems have issues selecting the correct upload target otherwise.
+4. Connect a ***single*** microcontroller to the host PC and upload the PlatformIO environment matching that
+   controller's target, one of `teensy41_actor`, `teensy41_sensor`, or `teensy41_encoder`. Do ***NOT*** connect more
+   than a single controller at a time, as some systems have issues selecting the correct upload target otherwise.
 5. After uploading the firmware, disconnect the microcontroller from the host PC and connect the next microcontroller.
 6. Repeat steps 4 and 5 until all microcontrollers are configured.
 7. Connect all microcontrollers to the PC that will manage the data acquisition runtime (the main data-acquisition PC).

@@ -3,8 +3,8 @@
  *
  * @brief Provides the entrypoint and per-target module configuration for the Sollertia microcontroller firmware.
  *
- * @note To upload the firmware to a target microcontroller, modify the active target macro below and use PlatformIO
- * to compile and upload the project. Only one Teensy 4.1 must be connected to the host PC at the time of upload.
+ * @note To upload the firmware to a target microcontroller, select the PlatformIO environment that matches the target
+ * and use it to compile and upload the project. Only one Teensy 4.1 must be connected to the host PC during upload.
  *
  * @note Designed to work with the Python interfaces from the sollertia-experiment project
  * (https://github.com/Sun-Lab-NBB/sollertia-experiment). See https://github.com/Sun-Lab-NBB/sollertia-micro-controllers
@@ -30,8 +30,8 @@ static constexpr uint32_t kSerialBaudRate = 115200;
 /// readout range that keeps the analog sensor readouts clean.
 static constexpr uint8_t kAnalogReadResolution = 12;
 
-// Defines the target microcontroller. The reference VR system currently has 3 valid targets: ACTOR, SENSOR, ENCODER.
-#define ACTOR
+// Each PlatformIO environment defines exactly one of the target macros below through its build flags, so the build
+// environment selects the target microcontroller. The reference VR system defines ACTOR, SENSOR, and ENCODER.
 
 // The literals in the target blocks below are hardware assignments: digital and analog pin numbers, module type
 // codes, per-controller instance IDs, and the torque sensor's ADC baseline. A named constant would restate the
@@ -67,7 +67,11 @@ static constexpr uint8_t kControllerID = 203;
 EncoderModule<33, 34, 35, true> wheel_encoder(2, 1, axmc_communication);
 Module* modules[] = {&wheel_encoder};
 #else
-static_assert(false, "Define one of the supported microcontroller targets (ACTOR, SENSOR, ENCODER).");
+static_assert(
+    false,
+    "Unable to resolve the target microcontroller. Build with a PlatformIO environment that defines one of the "
+    "supported target macros (ACTOR, SENSOR, ENCODER)."
+);
 #endif
 // NOLINTEND(*-magic-numbers)
 
