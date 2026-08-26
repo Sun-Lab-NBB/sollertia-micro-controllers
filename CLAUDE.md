@@ -68,10 +68,11 @@ of all three typically live alongside this repository, in its parent directory.
 The skills directly relevant to firmware work in this repository, and guaranteed to remain relevant regardless of
 which acquisition system consumes the firmware, are:
 
-| Skill                                  | Purpose                                                              |
-|----------------------------------------|----------------------------------------------------------------------|
-| `microcontroller:firmware-module`      | Base C++ `Module` subclass mechanics (ataraxis base template)        |
-| `experiment:microcontroller-interface` | Paired firmware Module + host-PC `ModuleInterface` contract registry |
+| Skill                                  | Purpose                                                                                            |
+|----------------------------------------|----------------------------------------------------------------------------------------------------|
+| `microcontroller:firmware-module`      | Base C++ `Module` subclass mechanics (ataraxis base template)                                      |
+| `experiment:microcontroller-interface` | Paired firmware Module + host-PC `ModuleInterface` contract registry                               |
+| `experiment:library-extension`         | Firmware module, controller target, and board family extension seams, and the cross-repo constants |
 
 The Sollertia platform's development and style skills required for routine changes ship in the ataraxis marketplace's
 `automation` plugin. Invoke them as directed by the "Session start behavior" and "Style guide compliance" sections
@@ -88,8 +89,12 @@ current consumer), so this file does not enumerate it. When a change reaches the
 **Canonical reading order when adding or modifying a firmware module:**
 1. `experiment:microcontroller-interface` covers the cross-repo paired Module + Interface contract. Allocate the new
    module type code and follow the slmc firmware + sle wrapper conventions it documents.
-2. `microcontroller:firmware-module` covers the base C++ `Module` subclass mechanics that the skill above extends.
-3. For consumer-side changes (binding classes, system configuration, post-flash hardware setup), consult the
+2. `experiment:library-extension` covers the seam view. Read it when the change adds a controller target or a board
+   family rather than a module, because those two seams carry different sollertia-experiment mirrors than a new module
+   does, and read it first when the driver of the change is a new acquisition system consuming this firmware rather
+   than new hardware on an existing one.
+3. `microcontroller:firmware-module` covers the base C++ `Module` subclass mechanics that the skill above extends.
+4. For consumer-side changes (binding classes, system configuration, post-flash hardware setup), consult the
    `experiment` plugin and the `sollertia-experiment` library for the consuming acquisition system's current surface,
    which is Mesoscope-VR today. A future consumer would expose its own skills.
 
@@ -108,6 +113,11 @@ Mesoscope-VR system. Its binding classes and `MesoscopeMicroControllers` configu
 
 Any change to a `Module` subclass's parameter structure, status codes, command codes, controller IDs, keepalive
 interval, or per-target module layout MUST be synchronized with the corresponding changes in sollertia-experiment.
+
+`experiment:microcontroller-interface` owns this synchronization list. It pairs every firmware constant below with the
+exact sollertia-experiment symbol that must move with it, and it carries the per-module conventions and the catalog of
+modules that currently exist. `experiment:library-extension` catalogues the three extension seams, a new firmware
+module, a new controller target, and a new board family, with the sollertia-experiment mirror each one obliges.
 
 **Before modifying any cross-repository contract, you MUST:**
 
@@ -226,7 +236,9 @@ target). The table below shows the current Mesoscope-VR deployment's assignments
 - **Stage-based command execution**: Multi-step commands (e.g., `ValveModule::Pulse`, `BrakeModule::SendPulse`) use
   `AdvanceCommandStage()` + `WaitForMicros()` for non-blocking execution across `RuntimeCycle()` iterations. The
   blocking exception is calibration commands (`ValveModule::Calibrate`, `EncoderModule::GetPPR`), which run as
-  intentional in-place loops with `@warning` annotations on their Doxygen blocks.
+  intentional in-place loops with `@warning` annotations on their Doxygen blocks. Both warnings mark the command
+  offline-only, because a block that outlasts `kKeepaliveInterval` trips the Kernel's emergency reset. Calibration is
+  experimenter-operated from the consumer's maintenance runtime.
 - **PACKED_STRUCT serialization**: Each module's `CustomRuntimeParameters` struct uses `PACKED_STRUCT` for byte-level
   binary compatibility with the companion Python `ModuleInterface`.
 - **Status code returns**: All operations return boolean / enum status codes rather than throwing exceptions,
@@ -269,8 +281,12 @@ assumes the library archetype where the board is the only build axis. This firmw
 controller target, so its environments are named `<board>_<target>` and share the non-buildable `[teensy41_base]`
 template that holds every field common to them. Preserve this layout when editing `platformio.ini`.
 
-Adding support for a new board family is a `platformio.ini` change (a new base template plus one environment per
-target) and any board-specific adjustments to pin assignments in the consumer's `main.cpp` target block.
+Adding support for a new board family is a `platformio.ini` change (a new base template mirroring `[teensy41_base]`,
+plus one environment per controller target) and any board-specific adjustments to the pin literals in this
+repository's own `src/main.cpp` target blocks. It also requires re-checking the per-module `LED_BUILTIN` asserts, that
+the board supports `analogReadResolution(12)`, and that the `Encoder` library supports the new architecture's
+interrupt pins. `experiment:library-extension` carries the full step list for this seam and for the seam that adds a
+new controller target.
 
 ### Development commands
 
@@ -310,8 +326,12 @@ general one.
    `Module* modules[]` array for that target.
 5. Add the new header to `Doxyfile`'s `INPUT` list and to `docs/source/api.rst` for documentation coverage.
 6. Update `experiment:microcontroller-interface`'s `references/module-catalog.md` with the new entry.
-7. Bump the slmc version (git tag) and flash to the affected board(s).
-8. Hand off to sollertia-experiment for the host-PC side. The handoff splits in two:
+7. Bump the slmc version. This project ships no `library.json`, so the two in-repository copies of the version are
+   `PROJECT_NUMBER` in `Doxyfile` and `release` in `docs/source/conf.py`. Update both to match the git tag, because a
+   one-sided bump leaves the Sphinx pages stamped with the previous release. The experimenter then flashes the
+   affected board(s), because firmware uploads are not agent-driven.
+8. Hand off to sollertia-experiment for the host-PC side. `experiment:library-extension` holds the seam view of this
+   handoff, naming the sollertia-experiment mirror each firmware constant obliges. The handoff splits in two:
    - **Python wrapper** (system-agnostic): author the new `ModuleInterface` subclass in
      `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py` following
      `experiment:microcontroller-interface`'s "sle Python wrapper conventions" section.
@@ -319,6 +339,12 @@ general one.
      `mesoscope:mesoscope-vr` to add calibration fields to `MesoscopeMicroControllers`, extend
      `MicroControllerInterfaces` to instantiate the new wrapper, and regenerate the system YAML. Bump the
      sollertia-experiment version so older deployments refuse to load against the new schema.
+
+***Note,*** this workflow covers new hardware for an acquisition system that already consumes this firmware. When the
+driver is a **new** acquisition system instead, start from `experiment:system-design-pipeline`, which orders the whole
+cross-repository build and routes to `assets:library-extension` for the shared-assets registry half and to
+`experiment:library-extension` for the sollertia-experiment and slmc seams. Reach this workflow only if the new system
+needs a module the seven existing ones do not already cover.
 
 **Modifying an existing module's parameter structure or status codes:**
 
@@ -331,18 +357,21 @@ general one.
 3. Make the firmware change, bump the slmc version, and coordinate companion changes via
    `experiment:microcontroller-interface` (wrapper-side) and the consumer's instance skill (binding-side, which for
    Mesoscope-VR is `mesoscope:mesoscope-vr`).
-4. Re-flash all affected boards (a parameter-struct change typically affects only the one target that hosts the
-   module, but a status-code change may ripple across PC-side log processing).
+4. The experimenter re-flashes all affected boards (a parameter-struct change typically affects only the one target
+   that hosts the module, but a status-code change may ripple across PC-side log processing).
 
 **Modifying controller IDs, keepalive interval, or per-target module layout:**
 
-1. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
+1. Read `experiment:library-extension`'s controller-target and board-family seams before editing anything. They name
+   the exact sollertia-experiment mirror for each of these constants, so the companion change is identified before the
+   firmware change is made rather than after.
+2. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
    before changing. For the current Mesoscope-VR consumer, this means coordinating with
    `mesoscope:mesoscope-vr`'s maintenance contract.
-2. Update `main.cpp` (controller IDs, keepalive interval, module instantiation order) and propagate the changes
+3. Update `main.cpp` (controller IDs, keepalive interval, module instantiation order) and propagate the changes
    to the matching constants in the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
    `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`).
-3. Update the README's "Per-Target Configuration" section to reflect the new values.
+4. Update the README's "Per-Target Configuration" section to reflect the new values.
 
 **Modifying build configuration, documentation, or style:**
 

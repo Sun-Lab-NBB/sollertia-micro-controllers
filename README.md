@@ -109,10 +109,18 @@ shipped with this project are:
 
 - **Controller IDs** (set in [main.cpp](src/main.cpp)): `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`.
 - **Keepalive interval**: `500` ms. The Kernel expects the host PC to send a keepalive message at least this often. If
-  it does not, the microcontroller resets to abort runtime.
+  it does not, the microcontroller resets to abort runtime. The Kernel doubles this value internally, so the emergency
+  reset fires after roughly twice the interval without a keepalive command.
+- **Serial baud rate**: `115200`. Teensy boards ignore the value, but the host-PC runtime opens the port with it, and
+  it matches the `monitor_speed` set in [platformio.ini](platformio.ini).
+- **Module `(type, id)` pairs**: each module instance is constructed with a module type code and a per-controller
+  instance ID. The current deployment assigns TTL `1`, encoder `2`, brake `3`, lick `4`, valve `5`, torque `6`, and
+  screen `7`, with instance ID `1` everywhere except the second valve (the gas-puff valve), which uses ID `2`.
 
-Adjust these values directly in `main.cpp` if a deployment needs different IDs or a different keepalive cadence,
-and make sure the host-PC configuration is updated to match.
+Adjust these values directly in `main.cpp` if a deployment needs different IDs, a different keepalive cadence, or a
+different module layout, and make sure the host-PC configuration is updated to match. When a deployment needs a new
+controller target or a new board family rather than new values for the existing ones, the experiment plugin's
+`/library-extension` skill carries the full seam list and names the sollertia-experiment mirror each change obliges.
 
 ___
 
@@ -135,11 +143,15 @@ ___
 Claude Code skills and AI development assets for this project are distributed through two marketplaces:
 
 - [sollertia](https://github.com/Sun-Lab-NBB/sollertia) marketplace:
-  - **experiment** plugin: the firmware-aware `/microcontroller-interface` skill, a registry of the paired firmware
-    Module and host-PC `ModuleInterface` classes and the cross-side contract they share. This is the entry point for any
-    change that spans this firmware and its [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment)
-    consumer, and it links out to the ataraxis plugins below for the underlying mechanics. The host-PC interface and
-    configuration skills it references belong to the consumer and are documented there.
+  - **experiment** plugin: two firmware-aware skills. `/microcontroller-interface` is a registry of the paired firmware
+    Module and host-PC `ModuleInterface` classes and the cross-side contract they share, and it is the entry point for
+    any change that spans this firmware and its
+    [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) consumer. It also owns the roster of
+    cross-repo constants that must move together: the keepalive interval, the serial baud rate, the controller IDs, the
+    module `(type, id)` pairs, the status and command codes, the parameter-struct layout, and the valve calibration
+    count. `/library-extension` owns the three extension seams, a new firmware module, a new controller target, and a
+    new board family. Both link out to the ataraxis plugins below for the underlying mechanics. The host-PC interface
+    and configuration skills they reference belong to the consumer and are documented there.
 - [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace:
   - **microcontroller** plugin: the foundational C++ firmware mechanics via the `/firmware-module` skill (base `Module`
     subclass implementation: template parameters, parameter structs, status and command codes, and stage-based command
@@ -158,7 +170,9 @@ ___
 
 This project uses [semantic versioning](https://semver.org/). See the
 [tags on this repository](https://github.com/Sun-Lab-NBB/sollertia-micro-controllers/tags) for the available project
-releases.
+releases. This project is a firmware application rather than a PlatformIO library, so it ships no `library.json`. The
+release version is declared in two in-repository files, `PROJECT_NUMBER` in [Doxyfile](Doxyfile) and `release` in
+[docs/source/conf.py](docs/source/conf.py), and both must be updated to match the tag.
 
 ___
 
