@@ -3,7 +3,7 @@
 ## Session start behavior
 
 At the beginning of each coding session, before making any code changes, you should build a comprehensive
-understanding of the codebase by invoking the `/explore-codebase` skill.
+understanding of the codebase by invoking the `automation:explore-codebase` skill.
 
 This ensures you:
 - Understand the project architecture before modifying code
@@ -16,19 +16,19 @@ This ensures you:
 
 You MUST invoke the appropriate skill before performing ANY of the following tasks:
 
-| Task                                       | Skill to invoke      |
-|--------------------------------------------|----------------------|
-| Writing or modifying C++ code              | `/cpp-style`         |
-| Writing or modifying README files          | `/readme-style`      |
-| Writing or modifying Sphinx docs files     | `/api-docs`          |
-| Writing or modifying platformio.ini        | `/platformio-config` |
-| Writing or modifying tox.ini               | `/tox-config`        |
-| Writing git commit messages                | `/commit`            |
-| Writing or modifying skill files / this MD | `/skill-design`      |
-| Auditing for style compliance              | `/audit-style`       |
-| Auditing for factual accuracy              | `/audit-facts`       |
-| Auditing for bugs and edge cases           | `/audit-correctness` |
-| Auditing for speed and memory use          | `/audit-performance` |
+| Task                                       | Skill to invoke                |
+|--------------------------------------------|--------------------------------|
+| Writing or modifying C++ code              | `automation:cpp-style`         |
+| Writing or modifying README files          | `automation:readme-style`      |
+| Writing or modifying Sphinx docs files     | `automation:api-docs`          |
+| Writing or modifying platformio.ini        | `automation:platformio-config` |
+| Writing or modifying tox.ini               | `automation:tox-config`        |
+| Writing git commit messages                | `automation:commit`            |
+| Writing or modifying skill files / this MD | `automation:skill-design`      |
+| Auditing for style compliance              | `automation:audit-style`       |
+| Auditing for factual accuracy              | `automation:audit-facts`       |
+| Auditing for bugs and edge cases           | `automation:audit-correctness` |
+| Auditing for speed and memory use          | `automation:audit-performance` |
 
 Each skill contains a verification checklist that you MUST complete before submitting any work. Failure to invoke the
 appropriate skill results in style violations that block release.
@@ -103,7 +103,7 @@ marketplace is not installed (the live `available-skills` list will not include 
 entries). The source for each skill lives at `sollertia/plugins/<plugin>/skills/<skill>/SKILL.md`. Consult these
 files directly when the slash-command form is not available.
 
-## Downstream library integration
+## Companion library synchronization
 
 This firmware lives on one end of a two-repository contract with `sollertia-experiment`, which owns the host-PC
 `ModuleInterface` wrappers (system-agnostic, in `src/sollertia_experiment/cross_system/module_interfaces.py`)
@@ -155,6 +155,14 @@ module, a new controller target, and a new board family, with the sollertia-expe
 - Doxygen comments, inline comments, file-level docstrings
 - LED error indication, ADC resolution settings, baud rate
 
+## Distribution model
+
+This repository ships firmware source and its own project instructions, and it publishes no skills of its own. The
+skills that cover this firmware are distributed separately, through two marketplaces: the ataraxis marketplace's
+`automation` plugin carries the style, audit, and workflow skills and its `microcontroller` plugin carries
+`firmware-module`, while the sollertia marketplace's `experiment` plugin carries `microcontroller-interface` and
+`library-extension`. A skill edit or a skill defect report lands in the owning marketplace repository rather than here.
+
 ## Project context
 
 This is **sollertia-micro-controllers**, a C++17 PlatformIO firmware library that specializes the general
@@ -165,6 +173,9 @@ hardware the only currently-supported consumer (the Mesoscope-VR acquisition sys
 to the host PC through the [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) runtime
 within the [Sollertia](https://github.com/Sun-Lab-NBB/sollertia) platform, which is built on the
 [Ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) framework.
+
+`.claude/rules/firmware-workflows.md` autoloads alongside this file and carries the development commands and the
+module-addition, parameter-change, controller-ID, and build-configuration workflows.
 
 ### Key areas
 
@@ -209,22 +220,9 @@ platform-general and consumable by any target.
 | `EncoderModule` | `encoder_module.h` | Monitors quadrature encoder with hardware-interrupt pulse count  | ENCODER             |
 | `main.cpp`      | `main.cpp`         | Per-target module instantiation, `setup()` and `loop()` entry    | All                 |
 
-### Module type and ID assignments
-
 Module type codes (`module_type` argument to each `Module` constructor) are assigned per hardware role, and they MUST
-not be reused across slmc. Each module also carries a `module_id` to disambiguate multiple instances of the same
-type on the same controller (currently used only for the two `ValveModule` instances on Mesoscope-VR's ACTOR
-target). The table below shows the current Mesoscope-VR deployment's assignments.
-
-| Type | Module           | Mesoscope-VR controller | Instances                                      |
-|------|------------------|-------------------------|------------------------------------------------|
-| 1    | `TTLModule`      | SENSOR                  | `mesoscope_frame` (id 1)                       |
-| 2    | `EncoderModule`  | ENCODER                 | `wheel_encoder` (id 1)                         |
-| 3    | `BrakeModule`    | ACTOR                   | `wheel_brake` (id 1)                           |
-| 4    | `LickModule`     | SENSOR                  | `lick_sensor` (id 1)                           |
-| 5    | `ValveModule`    | ACTOR                   | `reward_valve` (id 1), `gas_puff_valve` (id 2) |
-| 6    | `TorqueModule`   | SENSOR                  | `torque_sensor` (id 1)                         |
-| 7    | `ScreenModule`   | ACTOR                   | `screen_trigger` (id 1)                        |
+not be reused across slmc. The README's "Per-Target Configuration" section lists the current Mesoscope-VR deployment's
+type-code and instance-ID assignments.
 
 ### Key patterns
 
@@ -276,9 +274,9 @@ Each environment extends the shared `[teensy41_base]` template and appends its t
 build. Only one board must be connected to the host PC at upload time. An upload MUST name its environment, because
 an upload command without `-e` flashes the connected board once per environment and leaves it running the last one.
 
-***Exemption from `/platformio-config`:*** that skill mandates one `[env:<board>]` section named for the board, which
-assumes the library archetype where the board is the only build axis. This firmware carries a second axis, the
-controller target, so its environments are named `<board>_<target>` and share the non-buildable `[teensy41_base]`
+***Exemption from `automation:platformio-config`:*** that skill mandates one `[env:<board>]` section named for the
+board, which assumes the library archetype where the board is the only build axis. This firmware carries a second axis,
+the controller target, so its environments are named `<board>_<target>` and share the non-buildable `[teensy41_base]`
 template that holds every field common to them. Preserve this layout when editing `platformio.ini`.
 
 Adding support for a new board family is a `platformio.ini` change (a new base template mirroring `[teensy41_base]`,
@@ -288,105 +286,12 @@ the board supports `analogReadResolution(12)`, and that the `Encoder` library su
 interrupt pins. `experiment:library-extension` carries the full step list for this seam and for the seam that adds a
 new controller target.
 
-### Development commands
-
-```bash
-pio run                              # Compile every target firmware (the build regression gate)
-pio run -e teensy41_actor            # Compile a single target
-pio run -e teensy41_actor -t upload  # Compile and flash one target to the connected board
-pio check                            # Run clang-tidy static analysis across every target
-tox -e docs                          # Build Sphinx + Doxygen API documentation
-tox -e deploy                        # Upload the built documentation to the project's Netlify site
-```
-
 ### Issue templates
 
-The `.github/ISSUE_TEMPLATE/` forms are a superset of the general ataraxis templates that `/project-layout` prescribes.
-They carry every field of the general form plus the fields this project needs to reproduce a report, currently the
-firmware target the affected board ran. Audit them by confirming that the general form's content is present, rather
-than by requiring an exact match against it, and add a project-specific field to the superset rather than replacing a
-general one.
-
-### Workflow guidance
-
-**Adding a new hardware module to the firmware:**
-
-1. Invoke `experiment:microcontroller-interface` first to understand the cross-repo paired Module + Interface
-   contract (slmc firmware conventions + sle Python wrapper conventions + the cross-side agreement they must
-   honor). Allocate a new module type code from the registry in
-   `experiment:microcontroller-interface`'s `references/module-catalog.md`.
-2. Invoke `microcontroller:firmware-module` for the base C++ Module subclass mechanics (template parameter
-   conventions, `CustomRuntimeParameters` struct, `kCustomStatusCodes` / `kModuleCommands` enums, stage-based
-   command execution, `SendData` patterns) that `experiment:microcontroller-interface` extends.
-3. Write the new header in `src/<module>_module.h` following the slmc conventions documented in
-   `experiment:microcontroller-interface`'s "slmc firmware conventions" section.
-4. Add the module's `#include` and instantiation block to the appropriate target in `src/main.cpp` (for the
-   current Mesoscope-VR deployment, this means choosing one of ACTOR / SENSOR / ENCODER, and for a different
-   consumer, the choice depends on that system's target layout). Add the new instance to the
-   `Module* modules[]` array for that target.
-5. Add the new header to `Doxyfile`'s `INPUT` list and to `docs/source/api.rst` for documentation coverage.
-6. Update `experiment:microcontroller-interface`'s `references/module-catalog.md` with the new entry.
-7. Bump the slmc version. This project ships no `library.json`, so the two in-repository copies of the version are
-   `PROJECT_NUMBER` in `Doxyfile` and `release` in `docs/source/conf.py`. Update both to match the git tag, because a
-   one-sided bump leaves the Sphinx pages stamped with the previous release. The experimenter then flashes the
-   affected board(s), because firmware uploads are not agent-driven.
-8. Hand off to sollertia-experiment for the host-PC side. `experiment:library-extension` holds the seam view of this
-   handoff, naming the sollertia-experiment mirror each firmware constant obliges. The handoff splits in two:
-   - **Python wrapper** (system-agnostic): author the new `ModuleInterface` subclass in
-     `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py` following
-     `experiment:microcontroller-interface`'s "sle Python wrapper conventions" section.
-   - **Binding-class integration** (consumer-specific): for the current Mesoscope-VR consumer, hand off to
-     `mesoscope:mesoscope-vr` to add calibration fields to `MesoscopeMicroControllers`, extend
-     `MicroControllerInterfaces` to instantiate the new wrapper, and regenerate the system YAML. Bump the
-     sollertia-experiment version so older deployments refuse to load against the new schema.
-
-***Note,*** this workflow covers new hardware for an acquisition system that already consumes this firmware. When the
-driver is a **new** acquisition system instead, start from `experiment:system-design-pipeline`, which orders the whole
-cross-repository build and routes to `assets:library-extension` for the shared-assets registry half and to
-`experiment:library-extension` for the sollertia-experiment and slmc seams. Reach this workflow only if the new system
-needs a module the seven existing ones do not already cover.
-
-**Modifying an existing module's parameter structure or status codes:**
-
-1. Read the relevant header in `src/` to understand the current `CustomRuntimeParameters` and `kCustomStatusCodes`.
-2. Verify the corresponding host-PC `ModuleInterface` (in
-   `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py`) and the consuming
-   system's calibration fields (for Mesoscope-VR: `MesoscopeMicroControllers` in
-   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/system.py`) before making changes.
-   Cross-repository drift is a runtime hazard.
-3. Make the firmware change, bump the slmc version, and coordinate companion changes via
-   `experiment:microcontroller-interface` (wrapper-side) and the consumer's instance skill (binding-side, which for
-   Mesoscope-VR is `mesoscope:mesoscope-vr`).
-4. The experimenter re-flashes all affected boards (a parameter-struct change typically affects only the one target
-   that hosts the module, but a status-code change may ripple across PC-side log processing).
-
-**Modifying controller IDs, keepalive interval, or per-target module layout:**
-
-1. Read `experiment:library-extension`'s controller-target and board-family seams before editing anything. They name
-   the exact sollertia-experiment mirror for each of these constants, so the companion change is identified before the
-   firmware change is made rather than after.
-2. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
-   before changing. For the current Mesoscope-VR consumer, this means coordinating with
-   `mesoscope:mesoscope-vr`'s maintenance contract.
-3. Update `main.cpp` (controller IDs, keepalive interval, module instantiation order) and propagate the changes
-   to the matching constants in the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
-   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`).
-4. Update the README's "Per-Target Configuration" section to reflect the new values.
-
-**Modifying build configuration, documentation, or style:**
-
-1. C++ style changes: invoke `/cpp-style` and run `pio check` to catch shadowing, unused variables, etc.
-2. README / Sphinx docs changes: invoke `/readme-style` or `/api-docs` as appropriate. `tox -e docs` must succeed.
-3. tox.ini changes: invoke `/tox-config`.
-4. Build flag, clang-format, or clang-tidy changes: verify against the canonical assets shipped with `/cpp-style`.
-
-**Important considerations:**
-
-- Module type codes are `uint8_t`, and the `(type, id)` pair must be unique across all modules on a single controller.
-- Controller IDs are `uint8_t`. The `Kernel` accepts values 1 through 255 and reserves 0, requiring each ID to be
-  unique across concurrently-connected microcontrollers. The current Mesoscope-VR deployment uses 101 / 152 / 203.
-  Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
-  coordinate any new ID choice with the consuming acquisition system.
-- Pin selection must avoid `LED_BUILTIN`, and the per-module `static_assert` enforces this at compile time.
-- Calibration commands (`ValveModule::Calibrate`, `EncoderModule::GetPPR`) intentionally block the runtime, and they
-  must never run during an active acquisition session. Their Doxygen `@warning` blocks document this.
+The `.github/ISSUE_TEMPLATE/` forms carry no fields beyond the general ataraxis templates that
+`automation:project-layout` prescribes. `bug_report.yml` differs from the general form only by the sanctioned
+`{environment_example}` substitution, which fills the existing Environment field with the `OS:`, `PlatformIO:`, and
+`Board:` lines plus a `Firmware target:` line naming the target the affected board ran. `feature_request.yml` is
+verbatim. `config.yml` carries the `{project}` substitution and a second AI development assets link, because this
+repository's skills are split between the ataraxis and sollertia marketplaces. Audit the corpus by diffing it against
+the `automation:project-layout` assets and requiring an exact match outside those substitutions.
