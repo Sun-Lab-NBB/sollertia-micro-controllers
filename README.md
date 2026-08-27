@@ -153,9 +153,9 @@ Claude Code skills and AI development assets for this project are distributed th
     new board family. Both link out to the ataraxis plugins below for the underlying mechanics. The host-PC interface
     and configuration skills they reference belong to the consumer and are documented there.
 - [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace:
-  - **microcontroller** plugin: the foundational C++ firmware mechanics via the `/firmware-module` skill (base `Module`
-    subclass implementation: template parameters, parameter structs, status and command codes, and stage-based command
-    execution).
+  - **microcontroller** plugin: the foundational C++ firmware mechanics via the `microcontroller:firmware-module` skill
+    (base `Module` subclass implementation: template parameters, parameter structs, status and command codes, and
+    stage-based command execution).
   - **automation** plugin: shared development skills that enforce Sollertia platform coding conventions (C++ style,
     README style, commit messages, Sphinx documentation, tox configuration) and general-purpose codebase exploration
     tools.
