@@ -62,7 +62,7 @@ needs a module the seven existing ones do not already cover.
 4. The experimenter re-flashes all affected boards (a parameter-struct change typically affects only the one target
    that hosts the module, but a status-code change may ripple across PC-side log processing).
 
-**Modifying controller IDs, keepalive interval, or per-target module layout:**
+**Modifying the global `main.cpp` constants, controller IDs, or per-target module layout:**
 
 1. Read `experiment:library-extension`'s controller-target and board-family seams before editing anything. They name
    the exact sollertia-experiment mirror for each of these constants, so the companion change is identified before the
@@ -70,9 +70,12 @@ needs a module the seven existing ones do not already cover.
 2. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
    before changing. For the current Mesoscope-VR consumer, this means coordinating with
    `mesoscope:mesoscope-vr`'s maintenance contract.
-3. Update `main.cpp` (controller IDs, keepalive interval, module instantiation order) and propagate the changes
-   to the matching constants in the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
-   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`).
+3. Update `main.cpp` (`kControllerID`, `kKeepaliveInterval`, `kSerialBaudRate`, `kAnalogReadResolution`, module
+   instantiation order) and propagate each change to its host mirror. The controller IDs and the keepalive interval
+   reach the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
+   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`), the baud rate reaches
+   `_MICROCONTROLLER_BAUDRATE` in `interfaces/get.py`, and the ADC resolution re-scales every `*_adc` calibration field
+   of the consuming system's configuration.
 4. Update the README's "Per-Target Configuration" section to reflect the new values.
 
 **Modifying build configuration, documentation, or style:**
@@ -87,12 +90,13 @@ needs a module the seven existing ones do not already cover.
 **Important considerations:**
 
 - Module type codes are `uint8_t`, and the `(type, id)` pair must be unique across all modules on a single controller.
-  No compile-time or firmware check enforces this, unlike the pin and controller-ID rules below. Both codes are runtime
-  `Module` constructor arguments, so a repeat compiles and boots, and `Kernel::ResolveTargetModule` routes the shared
-  address to the first matching entry of `modules[]`. The PC-side `ataraxis-communication-interface` raises on the
-  repeat during its connection handshake, which runs after the controller has completed its first `Setup()`.
-- Controller IDs are `uint8_t`. The `Kernel` accepts values 1 through 255 and reserves 0, requiring each ID to be
-  unique across concurrently-connected microcontrollers. The current Mesoscope-VR deployment uses 101 / 152 / 203.
+  No compile-time or firmware check enforces this, unlike the pin rule below. Both codes are runtime `Module`
+  constructor arguments, so a repeat compiles and boots, and `Kernel::ResolveTargetModule` routes the shared address to
+  the first matching entry of `modules[]`. The PC-side `ataraxis-communication-interface` raises on the repeat during
+  its connection handshake, which runs after the controller has completed its first `Setup()`.
+- Controller IDs are `uint8_t`. The `Kernel` documents 1 through 255 with 0 reserved, and each ID must be unique across
+  concurrently-connected microcontrollers. Its constructor stores the value without validating it, so a 0 or a collision
+  surfaces on the PC side rather than at build time. The current Mesoscope-VR deployment uses 101 / 152 / 203.
   Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
   coordinate any new ID choice with the consuming acquisition system.
 - Pin selection must avoid `LED_BUILTIN`, and the per-module `static_assert` enforces this at compile time.

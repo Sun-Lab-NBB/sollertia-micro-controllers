@@ -8,9 +8,8 @@ understanding of the codebase by invoking the `automation:explore-codebase` skil
 This ensures you:
 - Understand the project architecture before modifying code
 - Follow existing patterns and conventions
-- Do not introduce inconsistencies or break integrations with downstream consumers of this firmware library
-  (currently the Mesoscope-VR acquisition system in sollertia-experiment, with future acquisition systems consuming
-  the same firmware library)
+- Do not introduce inconsistencies or break integrations with downstream consumers of this firmware library (currently
+  the Mesoscope-VR acquisition system in sollertia-experiment, and future systems consuming the same library)
 
 ## Style guide compliance
 
@@ -51,8 +50,7 @@ of all three typically live alongside this repository, in its parent directory.
 
 2. **Compare versions**: If a local copy exists, compare its version against the latest release or main branch on
    GitHub:
-   - Read the local `library.json` (ataraxis C++ libraries) or `pyproject.toml` (Sollertia Python libraries) to get
-     the current version
+   - Read the local `library.json` (ataraxis C++) or `pyproject.toml` (Sollertia Python) for the current version
    - Use `gh api repos/Sun-Lab-NBB/{repo-name}/releases/latest` to check the latest release
 
 3. **Handle version mismatches**: If the local version differs from the latest release or main branch, notify the user
@@ -111,13 +109,14 @@ and the per-acquisition-system binding classes and configuration dataclasses. Th
 Mesoscope-VR system. Its binding classes and `MesoscopeMicroControllers` configuration dataclass live in
 `src/sollertia_experiment/mesoscope_vr/`.
 
-Any change to a `Module` subclass's parameter structure, status codes, command codes, controller IDs, keepalive
-interval, or per-target module layout MUST be synchronized with the corresponding changes in sollertia-experiment.
+Any change to a value in the list below MUST be synchronized with the corresponding changes in sollertia-experiment.
 
-`experiment:microcontroller-interface` owns this synchronization list. It pairs every firmware constant below with the
-exact sollertia-experiment symbol that must move with it, and it carries the per-module conventions and the catalog of
-modules that currently exist. `experiment:library-extension` catalogues the three extension seams, a new firmware
-module, a new controller target, and a new board family, with the sollertia-experiment mirror each one obliges.
+`experiment:microcontroller-interface` is the authority for this surface, and the list below summarizes it. Its
+constants table pairs every entry below with its sollertia-experiment mirror, naming the exact symbol where the mirror
+is system-agnostic and routing the consumer-owned rows to the consuming system's skill, and its surrounding prose gives
+the failure modes. Read it rather than this list before changing a contract value. `experiment:library-extension`
+catalogues the three extension seams, a new firmware module, a new controller target, and a new board family, with the
+sollertia-experiment mirror each one obliges.
 
 **Before modifying any cross-repository contract, you MUST:**
 
@@ -128,8 +127,7 @@ module, a new controller target, and a new board family, with the sollertia-expe
    `sollertia-experiment/src/sollertia_experiment/cross_system/module_interfaces.py` that consumes the firmware
    module you are modifying, and the matching per-system calibration fields. For the current Mesoscope-VR consumer,
    the calibration lives in `MesoscopeMicroControllers`
-   (`sollertia-experiment/src/sollertia_experiment/mesoscope_vr/system.py`). Verify that both repositories
-   are currently in sync before making changes.
+   (`sollertia-experiment/src/sollertia_experiment/mesoscope_vr/system.py`). Verify both sides are in sync first.
 
 3. **Plan synchronized changes**: Document what must change in each repository. Notify the user of the required
    companion changes so they can be applied together.
@@ -138,22 +136,21 @@ module, a new controller target, and a new board family, with the sollertia-expe
    mismatches, dropped commands, or silent miscalibration.
 
 **What requires synchronization with sollertia-experiment:**
-- `kCustomStatusCodes` enum values (per-module, range 51-250 per the base `Module` class)
-- `kModuleCommands` enum values (per-module, unique within the module class). The underlying `uint8_t`
-  allows 1-255 with 0 reserved by the runtime to signal "no active command".
-- `CustomRuntimeParameters` struct layout, field names, and units (one struct per module)
-- Module template parameters (e.g., `EncoderModule<kPinA, kPinB, kPinX, kInvertDirection>`)
-- Controller IDs (currently `ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203` for the Mesoscope-VR consumer, with a
-  future consumer having its own assignments)
-- Keepalive interval (`kKeepaliveInterval`, currently 500 ms, which is Mesoscope-VR's chosen cadence)
-- Per-target module layout (which `Module` subclass instances live on which controller for each acquisition
-  system) and module `(type, id)` assignments
+- `kCustomStatusCodes` values (per-module, 51-250) and `kModuleCommands` values (per-module, 1-255 with 0 reserved)
+- `CustomRuntimeParameters` struct layout, field names, and units, one struct per module
+- Parameter values the host transmits from hardcoded literals, `kDefaultCalibrationCount` and `kMaximumDutyCycle`
+- Module template parameters, such as `TorqueModule`'s `kBaseline`, which the system configuration mirrors
+- Controller IDs (`ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`) and `kKeepaliveInterval` (500 ms), both per consumer
+- Per-target module layout, meaning which `Module` subclass instances live on which controller, and `(type, id)` pairs
+- `kSerialBaudRate` (115200), which Teensy ignores while the host opens the port with it
+- `kAnalogReadResolution` (12 bits), which every ADC-unit value on both sides is scaled to, and whose one-sided change
+  leaves each struct the same size so messages still parse while their numbers silently mean something else
 
 **What does NOT require synchronization:**
 - Internal `Module` implementation details (stage-based command execution, intermediate state variables)
-- Build configuration (`platformio.ini`, `tox.ini`, `Doxyfile`, `.clang-format`, `.clang-tidy`)
+- Build configuration (`tox.ini`, `Doxyfile`, `.clang-format`, `.clang-tidy`, and `platformio.ini` bar `monitor_speed`)
 - Doxygen comments, inline comments, file-level docstrings
-- LED error indication, ADC resolution settings, baud rate
+- LED error indication
 
 ## Distribution model
 
@@ -295,6 +292,7 @@ The `.github/ISSUE_TEMPLATE/` forms carry no fields beyond the general ataraxis 
 `automation:project-layout` prescribes. `bug_report.yml` differs from the general form only by the sanctioned
 `{environment_example}` substitution, which fills the existing Environment field with the `OS:`, `PlatformIO:`, and
 `Board:` lines plus a `Firmware target:` line naming the target the affected board ran. `feature_request.yml` is
-verbatim. `config.yml` carries the `{project}` substitution and a second AI development assets link, because this
-repository's skills are split between the ataraxis and sollertia marketplaces. Audit the corpus by diffing it against
-the `automation:project-layout` assets and requiring an exact match outside those substitutions.
+verbatim. `config.yml` carries the `{project}` substitution, a second AI development assets link, a marketplace tag on
+each assets link's `name`, and an `about` on each naming that marketplace's plugins, because this repository's skills
+are split between the ataraxis and sollertia marketplaces. Audit all three forms by diffing against the
+`automation:project-layout` assets and requiring an exact match outside those substitutions.

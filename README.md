@@ -114,6 +114,8 @@ shipped with this project are:
   reset fires after roughly twice the interval without a keepalive command.
 - **Serial baud rate**: `115200`. Teensy boards ignore the value, but the host-PC runtime opens the port with it, and
   it matches the `monitor_speed` set in [platformio.ini](platformio.ini).
+- **ADC resolution**: `12` bits, giving the 0 to 4095 readout range. Every ADC-unit value on both sides is scaled to
+  it, so a one-sided change leaves each message parseable while its numbers mean something else.
 - **Module `(type, id)` pairs**: each module instance is constructed with a module type code and a per-controller
   instance ID. The current deployment assigns TTL `1`, encoder `2`, brake `3`, lick `4`, valve `5`, torque `6`, and
   screen `7`, with instance ID `1` everywhere except the second valve (the gas-puff valve), which uses ID `2`. The pair
@@ -182,9 +184,8 @@ Claude Code skills and AI development assets for this project are distributed th
     Module and host-PC `ModuleInterface` classes and the cross-side contract they share, and it is the entry point for
     any change that spans this firmware and its
     [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) consumer. It also owns the roster of
-    cross-repo constants that must move together: the keepalive interval, the serial baud rate, the controller IDs, the
-    module `(type, id)` pairs, the status and command codes, the parameter-struct layout, and the valve calibration
-    count. `/library-extension` owns the three extension seams, a new firmware module, a new controller target, and a
+    cross-repo constants that must move together, pairing each one with the sollertia-experiment symbol that mirrors
+    it. `/library-extension` owns the three extension seams, a new firmware module, a new controller target, and a
     new board family. Both link out to the ataraxis plugins below for the underlying mechanics. The host-PC interface
     and configuration skills they reference belong to the consumer and are documented there.
 - [ataraxis](https://github.com/Sun-Lab-NBB/ataraxis) marketplace:
