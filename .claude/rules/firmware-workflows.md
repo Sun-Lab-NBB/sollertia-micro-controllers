@@ -87,6 +87,10 @@ needs a module the seven existing ones do not already cover.
 **Important considerations:**
 
 - Module type codes are `uint8_t`, and the `(type, id)` pair must be unique across all modules on a single controller.
+  No compile-time or firmware check enforces this, unlike the pin and controller-ID rules below. Both codes are runtime
+  `Module` constructor arguments, so a repeat compiles and boots, and `Kernel::ResolveTargetModule` routes the shared
+  address to the first matching entry of `modules[]`. The PC-side `ataraxis-communication-interface` raises on the
+  repeat during its connection handshake, which runs after the controller has completed its first `Setup()`.
 - Controller IDs are `uint8_t`. The `Kernel` accepts values 1 through 255 and reserves 0, requiring each ID to be
   unique across concurrently-connected microcontrollers. The current Mesoscope-VR deployment uses 101 / 152 / 203.
   Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
