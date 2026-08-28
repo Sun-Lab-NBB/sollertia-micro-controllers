@@ -46,6 +46,7 @@ ___
   - [Software Installation](#software-installation)
   - [Per-Target Configuration](#per-target-configuration)
 - [Usage](#usage)
+- [Extending the Library](#extending-the-library)
 - [API Documentation](#api-documentation)
 - [AI-Assisted Development](#ai-assisted-development)
 - [Versioning](#versioning)
@@ -128,6 +129,37 @@ ___
 
 Once the microcontrollers are assembled, configured, and connected to the main data acquisition PC, they are
 accessed via the [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library.
+
+___
+
+## Extending the Library
+
+The firmware exposes three extension seams, and each one carries a matching obligation in the
+[sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library that drives it.
+
+- **A new hardware module.** Add `src/<name>_module.h` declaring a `Module` subclass, then wire it into the target's
+  `#ifdef` block in `src/main.cpp` as an include, an instantiation carrying a unique `(module_type, module_id)` pair,
+  and an entry in that target's `modules[]` array. The module stays unusable until a matching `ModuleInterface`
+  subclass exists in sollertia-experiment's `cross_system/module_interfaces.py`, carrying the same type, id, command
+  codes, status codes, and parameter field order.
+- **A new controller target.** Add an `[env:teensy41_<target>]` environment to `platformio.ini` inheriting
+  `[teensy41_base]`, then add an `#elif defined <TARGET>` branch to `src/main.cpp` declaring its `kControllerID`, its
+  module instances, and its `modules[]` array. Name the target in the `static_assert` of the `#else` branch, and
+  mirror it with a `MicroControllerInterface` carrying the same controller id.
+- **A new board family.** Add a second non-`env:` template mirroring `[teensy41_base]` in `platformio.ini`, plus one
+  `[env:<board>_<target>]` environment per target. Teensy 4.1 is currently the only family, because every shipped
+  environment inherits its `board` and `monitor_speed` from that one template.
+
+Module type codes 1 through 7 are in use, and 8 is the next unused code. The `(module_type, module_id)` pair must be
+unique within its controller, and no build step checks it, so a collision surfaces only at the identification
+handshake the acquisition runtime performs when a session starts.
+
+The library version is declared in two places that must move together, `PROJECT_NUMBER` in `Doxyfile` and `release`
+in `docs/source/conf.py`.
+
+For the ordered step lists, the roster of constants that must move across repositories, and the paired-class
+contract, use the **experiment** plugin skills described under
+[AI-Assisted Development](#ai-assisted-development).
 
 ___
 
