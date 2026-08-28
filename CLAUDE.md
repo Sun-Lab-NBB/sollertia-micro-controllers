@@ -221,8 +221,11 @@ platform-general and consumable by any target.
 | `main.cpp`      | `main.cpp`         | Per-target module instantiation, `setup()` and `loop()` entry    | All                 |
 
 Module type codes (`module_type` argument to each `Module` constructor) are assigned per hardware role, and they MUST
-not be reused across slmc. The README's "Per-Target Configuration" section lists the current Mesoscope-VR deployment's
-type-code and instance-ID assignments.
+not be reused across slmc. The binding constraint is the `(module_type, module_id)` PAIR, which MUST be unique across
+every module a single controller manages, so two instances of one role on one controller need different instance IDs.
+Nothing in the firmware verifies this. The PC interface reports a repeat during its connection handshake, after the
+controller has already run `Setup()` on every module. The README's "Per-Target Configuration" section lists the current
+Mesoscope-VR deployment's type-code and instance-ID assignments.
 
 ### Key patterns
 

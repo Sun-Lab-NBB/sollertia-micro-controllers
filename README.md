@@ -116,7 +116,10 @@ shipped with this project are:
   it matches the `monitor_speed` set in [platformio.ini](platformio.ini).
 - **Module `(type, id)` pairs**: each module instance is constructed with a module type code and a per-controller
   instance ID. The current deployment assigns TTL `1`, encoder `2`, brake `3`, lick `4`, valve `5`, torque `6`, and
-  screen `7`, with instance ID `1` everywhere except the second valve (the gas-puff valve), which uses ID `2`.
+  screen `7`, with instance ID `1` everywhere except the second valve (the gas-puff valve), which uses ID `2`. The pair
+  must be unique across every module on one controller, which is why the two valves share type `5` and differ by ID.
+  The firmware accepts a repeated pair without complaint. The host-PC runtime reports it when it connects, after the
+  controller has already set up its hardware, so check the pairs by hand whenever this list changes.
 
 Adjust these values directly in `main.cpp` if a deployment needs different IDs, a different keepalive cadence, or a
 different module layout, and make sure the host-PC configuration is updated to match. When a deployment needs a new
