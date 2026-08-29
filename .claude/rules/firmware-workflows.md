@@ -15,8 +15,8 @@ tox -e deploy                        # Upload the built documentation to the pro
 
 1. Invoke `experiment:microcontroller-interface` first to understand the cross-repo paired Module + Interface
    contract (slmc firmware conventions + sle Python wrapper conventions + the cross-side agreement they must
-   honor). Allocate a new module type code from the registry in
-   `experiment:microcontroller-interface`'s `references/module-catalog.md`.
+   honor). Allocate a new module type code from the registry in `experiment:microcontroller-interface`'s
+   `references/module-catalog.md`.
 2. Invoke `microcontroller:firmware-module` for the base C++ Module subclass mechanics (template parameter
    conventions, `CustomRuntimeParameters` struct, `kCustomStatusCodes` / `kModuleCommands` enums, stage-based
    command execution, `SendData` patterns) that `experiment:microcontroller-interface` extends.
@@ -24,8 +24,8 @@ tox -e deploy                        # Upload the built documentation to the pro
    `experiment:microcontroller-interface`'s "slmc firmware conventions" section.
 4. Add the module's `#include` and instantiation block to the appropriate target in `src/main.cpp` (for the
    current Mesoscope-VR deployment, this means choosing one of ACTOR / SENSOR / ENCODER, and for a different
-   consumer, the choice depends on that system's target layout). Add the new instance to the
-   `Module* modules[]` array for that target.
+   consumer, the choice depends on that system's target layout). Add the new instance to the `Module* modules[]`
+   array for that target.
 5. Add the new header to `Doxyfile`'s `INPUT` list and to `docs/source/api.rst` for documentation coverage.
 6. Update `experiment:microcontroller-interface`'s `references/module-catalog.md` with the new entry.
 7. Bump the slmc version. This project ships no `library.json`, so the two in-repository copies of the version are
@@ -62,17 +62,20 @@ needs a module the seven existing ones do not already cover.
 4. The experimenter re-flashes all affected boards (a parameter-struct change typically affects only the one target
    that hosts the module, but a status-code change may ripple across PC-side log processing).
 
-**Modifying controller IDs, keepalive interval, or per-target module layout:**
+**Modifying the global `main.cpp` constants, controller IDs, or per-target module layout:**
 
 1. Read `experiment:library-extension`'s controller-target and board-family seams before editing anything. They name
    the exact sollertia-experiment mirror for each of these constants, so the companion change is identified before the
    firmware change is made rather than after.
 2. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
-   before changing. For the current Mesoscope-VR consumer, this means coordinating with
-   `mesoscope:mesoscope-vr`'s maintenance contract.
-3. Update `main.cpp` (controller IDs, keepalive interval, module instantiation order) and propagate the changes
-   to the matching constants in the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
-   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`).
+   before changing. For the current Mesoscope-VR consumer, this means coordinating with `mesoscope:mesoscope-vr`'s
+   maintenance contract.
+3. Update `main.cpp` (`kControllerID`, `kKeepaliveInterval`, `kSerialBaudRate`, `kAnalogReadResolution`, module
+   instantiation order) and propagate each change to its host mirror. The controller IDs and the keepalive interval
+   reach the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
+   `sollertia-experiment/src/sollertia_experiment/mesoscope_vr/binding_classes.py`), the baud rate reaches
+   `_MICROCONTROLLER_BAUDRATE` in `interfaces/get.py`, and the ADC resolution re-scales every `*_adc` calibration field
+   of the consuming system's configuration.
 4. Update the README's "Per-Target Configuration" section to reflect the new values.
 
 **Modifying build configuration, documentation, or style:**
@@ -87,12 +90,16 @@ needs a module the seven existing ones do not already cover.
 **Important considerations:**
 
 - Module type codes are `uint8_t`, and the `(type, id)` pair must be unique across all modules on a single controller.
-  No compile-time or firmware check enforces this, unlike the pin and controller-ID rules below. Both codes are runtime
-  `Module` constructor arguments, so a repeat compiles and boots, and `Kernel::ResolveTargetModule` routes the shared
-  address to the first matching entry of `modules[]`. The PC-side `ataraxis-communication-interface` raises on the
-  repeat during its connection handshake, which runs after the controller has completed its first `Setup()`.
-- Controller IDs are `uint8_t`. The `Kernel` accepts values 1 through 255 and reserves 0, requiring each ID to be
-  unique across concurrently-connected microcontrollers. The current Mesoscope-VR deployment uses 101 / 152 / 203.
+  No compile-time or firmware check enforces this, unlike the pin rule below. Both codes are runtime `Module`
+  constructor arguments, so a repeat compiles and boots, and `Kernel::ResolveTargetModule` routes the shared address to
+  the first matching entry of `modules[]`. The PC-side `ataraxis-communication-interface` raises on the repeat during
+  its connection handshake, which runs after the controller has completed its first `Setup()`.
+- Controller IDs are `uint8_t`. The `Kernel` documents 1 through 255 with 0 reserved, and each ID must be unique across
+  concurrently-connected microcontrollers. The firmware validates neither rule, as the `Kernel` constructor stores the
+  value unchecked. The host catches it instead. Each `MicroControllerInterface` binds one port to one expected id, and
+  the identification handshake raises `ValueError` when the board on that port reports a different one, so a board
+  carrying the wrong target's firmware fails on the first connection attempt. Only a host configured with two
+  interfaces sharing an id escapes that check. The current Mesoscope-VR deployment uses 101 / 152 / 203.
   Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
   coordinate any new ID choice with the consuming acquisition system.
 - Pin selection must avoid `LED_BUILTIN`, and the per-module `static_assert` enforces this at compile time.

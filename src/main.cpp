@@ -42,6 +42,7 @@ static constexpr uint8_t kAnalogReadResolution = 12;
 #include "screen_module.h"
 #include "valve_module.h"
 
+/// Stores the unique identifier of this controller, which the host PC uses to address the board.
 static constexpr uint8_t kControllerID = 101;
 BrakeModule<33, false, true> wheel_brake(3, 1, axmc_communication);
 ValveModule<35, true, true, 34> reward_valve(5, 1, axmc_communication);
@@ -54,6 +55,7 @@ Module* modules[] = {&wheel_brake, &reward_valve, &gas_puff_valve, &screen_trigg
 #include "torque_module.h"
 #include "ttl_module.h"
 
+/// Stores the unique identifier of this controller, which the host PC uses to address the board.
 static constexpr uint8_t kControllerID = 152;
 TTLModule<34, false, false> mesoscope_frame(1, 1, axmc_communication);
 LickModule<41> lick_sensor(4, 1, axmc_communication);
@@ -63,6 +65,7 @@ Module* modules[] = {&mesoscope_frame, &lick_sensor, &torque_sensor};
 #elif defined ENCODER
 #include "encoder_module.h"
 
+/// Stores the unique identifier of this controller, which the host PC uses to address the board.
 static constexpr uint8_t kControllerID = 203;
 EncoderModule<33, 34, 35, true> wheel_encoder(2, 1, axmc_communication);
 Module* modules[] = {&wheel_encoder};

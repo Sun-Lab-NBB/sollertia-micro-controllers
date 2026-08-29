@@ -10,7 +10,7 @@
 #include <Arduino.h>
 #include <module.h>
 
-/// The kTonePin template parameter value used to indicate that no piezoelectric tone buzzer is connected.
+/// Stores the kTonePin template parameter value that indicates no piezoelectric tone buzzer is connected.
 static constexpr uint8_t kUnusedTonePin = 255;
 
 /**
@@ -218,8 +218,7 @@ class ValveModule final : public Module
          * @brief Derives the extra tone time from the instance's current pulse and tone durations.
          *
          * The delta is the time the buzzer stays energized after the valve closes, so it is 0 whenever the tone does
-         * not outlast the valve pulse. Both SetupModule() and SetCustomParameters() call this method, keeping the
-         * delta consistent with the durations that Pulse() branches on.
+         * not outlast the valve pulse.
          */
         void ResolveToneTimeDelta()
         {

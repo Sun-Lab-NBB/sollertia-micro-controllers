@@ -155,25 +155,25 @@ class EncoderModule final : public Module
         /// encoder readouts.
         static constexpr int32_t kMultiplier = kInvertDirection ? -1 : 1;  // NOLINT(*-dynamic-static-initializers)
 
-        /// The number of full encoder rotations to measure when estimating the Pulse-Per-Revolution (PPR) value.
+        /// Stores the number of full encoder rotations measured when estimating the Pulse-Per-Revolution (PPR) value.
         static constexpr uint8_t kPPRMeasuredRotations = 10;
 
         /// Stores the delay, in milliseconds, that lets the index-pin trigger window elapse between rotations.
         static constexpr uint16_t kIndexSettleDelay = 100;
 
-        /// The encoder class that monitors the encoder's rotation. Must be initialized statically; deferred
-        /// initialization causes a runtime crash.
+        /// Wraps the Encoder instance that monitors the encoder's rotation. The member is initialized statically,
+        /// because deferred initialization causes a runtime crash.
         Encoder _encoder = Encoder(kPinA, kPinB);
 
         /// Accumulates insignificant encoder readouts to be reused during future encoder state evaluation calls.
         int32_t _overflow = 0;
 
-        /// Determines the maximum encoder displacement (rotation) in the counterclockwise (CCW) that can be accumulated
-        /// in the _overflow attribute during runtime when reporting the CCW rotation is disabled.
+        /// Determines the maximum encoder displacement (rotation) in the counterclockwise (CCW) direction that can be
+        /// accumulated in the _overflow attribute during runtime when reporting the CCW rotation is disabled.
         int32_t _positive_amortization = 0;
 
-        /// Determines the maximum encoder displacement (rotation) in the clockwise (CW) that can be accumulated in the
-        /// _overflow attribute during runtime when reporting the CW rotation is disabled.
+        /// Determines the maximum encoder displacement (rotation) in the clockwise (CW) direction that can be
+        /// accumulated in the _overflow attribute during runtime when reporting the CW rotation is disabled.
         int32_t _negative_amortization = 0;
 
         /**
@@ -181,8 +181,7 @@ class EncoderModule final : public Module
          *
          * Amortization permits the overflow accumulator to store pulses in the non-reported direction up to the
          * threshold, suppressing small jitter (for example, a locked running wheel) so that opposing micro-motions
-         * cancel out instead of accumulating into a spurious directional event. Both SetupModule() and
-         * SetCustomParameters() call this method, keeping the caps consistent with the threshold ReadEncoder() uses.
+         * cancel out instead of accumulating into a spurious directional event.
          */
         void ResolveAmortizationCaps()
         {
@@ -217,8 +216,8 @@ class EncoderModule final : public Module
 
             const auto delta = static_cast<uint32_t>(abs(_overflow));
 
-            // Negative overflow encodes CW displacement; positive overflow encodes CCW. Only reports magnitudes that
-            // exceed the configured delta threshold, then drains the accumulator.
+            // Negative overflow encodes CW displacement, and positive overflow encodes CCW. Only reports magnitudes
+            // that exceed the configured delta threshold, then drains the accumulator.
             if (_overflow < 0 && delta > _custom_parameters.delta_threshold)
             {
                 SendData(static_cast<uint8_t>(kCustomStatusCodes::kRotatedCW), delta);
@@ -251,9 +250,9 @@ class EncoderModule final : public Module
          */
         void GetPPR()
         {
-            // Discards an index window the encoder may already be parked inside, so the baseline below is established
-            // on a genuine low-to-high index transition. A baseline taken part-way through a window makes the first
-            // measured revolution short and deflates the average.
+            // Discards an index window inside which the encoder may already be parked, so the baseline below is
+            // established on a genuine low-to-high index transition. A baseline taken part-way through a window makes
+            // the first measured revolution short and deflates the average.
             while (digitalReadFast(kPinX))
             {
             }
