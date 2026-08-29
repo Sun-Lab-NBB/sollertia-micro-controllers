@@ -95,8 +95,11 @@ needs a module the seven existing ones do not already cover.
   the first matching entry of `modules[]`. The PC-side `ataraxis-communication-interface` raises on the repeat during
   its connection handshake, which runs after the controller has completed its first `Setup()`.
 - Controller IDs are `uint8_t`. The `Kernel` documents 1 through 255 with 0 reserved, and each ID must be unique across
-  concurrently-connected microcontrollers. Its constructor stores the value without validating it, so a 0 or a collision
-  surfaces on the PC side rather than at build time. The current Mesoscope-VR deployment uses 101 / 152 / 203.
+  concurrently-connected microcontrollers. The firmware validates neither rule, as the `Kernel` constructor stores the
+  value unchecked. The host catches it instead. Each `MicroControllerInterface` binds one port to one expected id, and
+  the identification handshake raises `ValueError` when the board on that port reports a different one, so a board
+  carrying the wrong target's firmware fails on the first connection attempt. Only a host configured with two
+  interfaces sharing an id escapes that check. The current Mesoscope-VR deployment uses 101 / 152 / 203.
   Cross-reference the PC-side `ataraxis-communication-interface` conventions before reusing any low values, and
   coordinate any new ID choice with the consuming acquisition system.
 - Pin selection must avoid `LED_BUILTIN`, and the per-module `static_assert` enforces this at compile time.

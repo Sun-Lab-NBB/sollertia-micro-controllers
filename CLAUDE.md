@@ -162,7 +162,7 @@ skills that cover this firmware are distributed separately, through two marketpl
 
 ## Project context
 
-This is **sollertia-micro-controllers**, a C++17 PlatformIO firmware library that specializes the general
+This is **sollertia-micro-controllers**, a C++17 PlatformIO firmware project that specializes the general
 microcontroller framework provided by `ataraxis-micro-controller` into the concrete hardware modules used by
 Sollertia platform data acquisition systems. The firmware is Arduino-compatible at the framework level and is
 not locked to any single board family. The current deployment targets Teensy 4.1 boards because that is the
@@ -235,12 +235,13 @@ Mesoscope-VR deployment's type-code and instance-ID assignments.
   `AdvanceCommandStage()` + `WaitForMicros()` for non-blocking execution across `RuntimeCycle()` iterations. The
   blocking exception is calibration commands (`ValveModule::Calibrate`, `EncoderModule::GetPPR`), which run as
   intentional in-place loops with `@warning` annotations on their Doxygen blocks. Both warnings mark the command
-  offline-only, because a block that outlasts `kKeepaliveInterval` trips the Kernel's emergency reset. Calibration is
-  experimenter-operated from the consumer's maintenance runtime.
+  offline-only, because a block that outlasts the Kernel's keepalive timeout, which is twice `kKeepaliveInterval`,
+  trips its emergency reset. Calibration is experimenter-operated from the consumer's maintenance runtime.
 - **PACKED_STRUCT serialization**: Each module's `CustomRuntimeParameters` struct uses `PACKED_STRUCT` for byte-level
   binary compatibility with the companion Python `ModuleInterface`.
-- **Status code returns**: All operations return boolean / enum status codes rather than throwing exceptions,
-  consistent with embedded C++ patterns.
+- **Status code returns**: No operation throws, consistent with embedded C++ patterns. The three overridden virtuals
+  return `bool`, the command implementations behind them return `void`, and every module reports its runtime state by
+  passing a `kCustomStatusCodes` value to `SendData()`.
 - **Custom status codes 51-250**: Module-specific `kCustomStatusCodes` use the 51-250 range reserved for module
   subclasses by `ataraxis-micro-controller`.
 - **LED-pin static_assert**: Every module class opens with `static_assert` blocks that reject `LED_BUILTIN` for each
