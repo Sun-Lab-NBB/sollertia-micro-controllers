@@ -118,7 +118,7 @@ class TorqueModule final : public Module
         /// Stores the default number of readouts to average when computing the reported torque value.
         static constexpr uint8_t kDefaultAveragePoolSize = 4;
 
-        /// Stores the raw signal readout that the next delta comparison measures against, updated only when a
+        /// Stores the raw signal readout against which the next delta comparison is measured, updated only when a
         /// readout clears the delta threshold.
         uint16_t _previous_readout = kBaseline;
 
@@ -148,14 +148,14 @@ class TorqueModule final : public Module
             bool is_clockwise = false;
             if (signal > kBaseline)
             {
-                // CCW torque grows as the signal grows; rebase to [0, kBaseline].
+                // CCW torque grows as the signal grows, so the reading rebases to [0, kBaseline].
                 is_clockwise = false ^ kInvertDirection;
                 signal       = signal - kBaseline;
             }
             else if (signal < kBaseline)
             {
-                // CW torque grows as the signal shrinks; flip and rebase to [0, kBaseline] so larger values still mean
-                // larger torque.
+                // CW torque grows as the signal shrinks, so the reading flips and rebases to [0, kBaseline]. Larger
+                // values then still mean larger torque.
                 is_clockwise = true ^ kInvertDirection;
                 signal       = kBaseline - signal;
             }

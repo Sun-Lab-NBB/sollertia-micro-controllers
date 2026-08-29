@@ -5,11 +5,9 @@
 At the beginning of each coding session, before making any code changes, you should build a comprehensive
 understanding of the codebase by invoking the `automation:explore-codebase` skill.
 
-This ensures you:
-- Understand the project architecture before modifying code
-- Follow existing patterns and conventions
-- Do not introduce inconsistencies or break integrations with downstream consumers of this firmware library (currently
-  the Mesoscope-VR acquisition system in sollertia-experiment, and future systems consuming the same library)
+This keeps changes from introducing inconsistencies or breaking integrations with downstream consumers of this firmware
+library, currently the Mesoscope-VR acquisition system in sollertia-experiment, and future systems consuming the same
+library.
 
 ## Style guide compliance
 
@@ -45,8 +43,8 @@ of all three typically live alongside this repository, in its parent directory.
 
 **Before writing code that interacts with a cross-referenced library, you MUST:**
 
-1. **Check for local version**: Look for the library in the parent directory (e.g.,
-   `../ataraxis-micro-controller/`, `../sollertia-experiment/`).
+1. **Check for local version**: Look for the library in the parent directory (e.g., `../ataraxis-micro-controller/`,
+   `../sollertia-experiment/`).
 
 2. **Compare versions**: If a local copy exists, compare its version against the latest release or main branch on
    GitHub:
@@ -89,8 +87,8 @@ current consumer), so this file does not enumerate it. When a change reaches the
    module type code and follow the slmc firmware + sle wrapper conventions it documents.
 2. `experiment:library-extension` covers the seam view. Read it when the change adds a controller target or a board
    family rather than a module, because those two seams carry different sollertia-experiment mirrors than a new module
-   does, and read it first when the driver of the change is a new acquisition system consuming this firmware rather
-   than new hardware on an existing one.
+   does. Read it first when the driver of the change is a new acquisition system consuming this firmware rather than
+   new hardware on an existing one.
 3. `microcontroller:firmware-module` covers the base C++ `Module` subclass mechanics that the skill above extends.
 4. For consumer-side changes (binding classes, system configuration, post-flash hardware setup), consult the
    `experiment` plugin and the `sollertia-experiment` library for the consuming acquisition system's current surface,
@@ -143,7 +141,7 @@ sollertia-experiment mirror each one obliges.
 - Controller IDs (`ACTOR = 101`, `SENSOR = 152`, `ENCODER = 203`) and `kKeepaliveInterval` (500 ms), both per consumer
 - Per-target module layout, meaning which `Module` subclass instances live on which controller, and `(type, id)` pairs
 - `kSerialBaudRate` (115200), which Teensy ignores while the host opens the port with it
-- `kAnalogReadResolution` (12 bits), which every ADC-unit value on both sides is scaled to, and whose one-sided change
+- `kAnalogReadResolution` (12 bits), to which every ADC-unit value on both sides is scaled, and whose one-sided change
   leaves each struct the same size so messages still parse while their numbers silently mean something else
 
 **What does NOT require synchronization:**
@@ -176,10 +174,10 @@ module-addition, parameter-change, controller-ID, and build-configuration workfl
 
 ### Key areas
 
-| Directory  | Purpose                                                                              |
-|------------|--------------------------------------------------------------------------------------|
-| `src/`     | Firmware source: per-module headers and `main.cpp` per-target entry point            |
-| `docs/`    | Sphinx + Breathe documentation source (consumes Doxygen XML)                         |
+| Directory | Purpose                                                                   |
+|-----------|---------------------------------------------------------------------------|
+| `src/`    | Firmware source: per-module headers and `main.cpp` per-target entry point |
+| `docs/`   | Sphinx + Breathe documentation source (consumes Doxygen XML)              |
 
 ### Architecture
 
@@ -206,16 +204,16 @@ The Mesoscope-VR column below shows where each module is instantiated under the 
 A future acquisition system could partition these modules differently, because every module in this table is
 platform-general and consumable by any target.
 
-| Component       | File               | Purpose                                                          | Mesoscope-VR target |
-|-----------------|--------------------|------------------------------------------------------------------|---------------------|
-| `BrakeModule`   | `brake_module.h`   | Controls electromagnetic particle brake on the running wheel     | ACTOR               |
-| `ValveModule`   | `valve_module.h`   | Drives solenoid valve (water reward + tone buzzer, gas puff)     | ACTOR               |
-| `ScreenModule`  | `screen_module.h`  | Pulses VR screen power-board FET gates                           | ACTOR               |
-| `LickModule`    | `lick_module.h`    | Monitors conductive lick sensor voltage                          | SENSOR              |
-| `TorqueModule`  | `torque_module.h`  | Monitors AD620-amplified torque sensor on the running wheel      | SENSOR              |
-| `TTLModule`     | `ttl_module.h`     | Emits or reads TTL pulses for external hardware synchronization  | SENSOR              |
-| `EncoderModule` | `encoder_module.h` | Monitors quadrature encoder with hardware-interrupt pulse count  | ENCODER             |
-| `main.cpp`      | `main.cpp`         | Per-target module instantiation, `setup()` and `loop()` entry    | All                 |
+| Component       | File               | Purpose                                                         | Mesoscope-VR target |
+|-----------------|--------------------|-----------------------------------------------------------------|---------------------|
+| `BrakeModule`   | `brake_module.h`   | Controls electromagnetic particle brake on the running wheel    | ACTOR               |
+| `ValveModule`   | `valve_module.h`   | Drives solenoid valve (water reward + tone buzzer, gas puff)    | ACTOR               |
+| `ScreenModule`  | `screen_module.h`  | Pulses VR screen power-board FET gates                          | ACTOR               |
+| `LickModule`    | `lick_module.h`    | Monitors conductive lick sensor voltage                         | SENSOR              |
+| `TorqueModule`  | `torque_module.h`  | Monitors AD620-amplified torque sensor on the running wheel     | SENSOR              |
+| `TTLModule`     | `ttl_module.h`     | Emits or reads TTL pulses for external hardware synchronization | SENSOR              |
+| `EncoderModule` | `encoder_module.h` | Monitors quadrature encoder with hardware-interrupt pulse count | ENCODER             |
+| `main.cpp`      | `main.cpp`         | Per-target module instantiation, `setup()` and `loop()` entry   | All                 |
 
 Module type codes (`module_type` argument to each `Module` constructor) are assigned per hardware role, and they MUST
 not be reused across slmc. The binding constraint is the `(module_type, module_id)` PAIR, which MUST be unique across

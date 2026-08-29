@@ -105,7 +105,7 @@ class LickModule final : public Module
         /// Stores the default number of readouts to average, which suppresses single-sample ADC noise.
         static constexpr uint8_t kDefaultAveragePoolSize = 2;
 
-        /// Stores the voltage level readout that the next delta comparison measures against, updated only when a
+        /// Stores the voltage level readout against which the next delta comparison is measured, updated only when a
         /// readout clears the delta threshold.
         uint16_t _previous_readout = 0;
 

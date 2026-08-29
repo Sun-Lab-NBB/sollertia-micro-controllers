@@ -30,17 +30,17 @@ using a rotary encoder and, due to interrupt logic constraints, is segmented int
 This combination maximizes data acquisition speed while avoiding communication channel overloading. Future acquisition
 systems can define any other set of targets with any partitioning of the available modules across boards.
 
-This repository contains the firmware that runs on the microcontrollers used by the Sollertia platform and links to the
-schematics for assembling them. The hardware created and programmed as part of this project is designed to be
-interfaced through the bindings available from the
-[sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library, which is a core dependency of every
-Sollertia platform acquisition system.
+The hardware created and programmed as part of this project is designed to be interfaced through the bindings available
+from the [sollertia-experiment](https://github.com/Sun-Lab-NBB/sollertia-experiment) library, which is a core dependency
+of every Sollertia platform acquisition system.
 
 ___
 
 ## Table of Contents
 
 - [Dependencies](#dependencies)
+  - [Main Dependency](#main-dependency)
+  - [Additional Dependencies](#additional-dependencies)
 - [Installation](#installation)
   - [Hardware Assembly](#hardware-assembly)
   - [Software Installation](#software-installation)
@@ -86,8 +86,8 @@ Sollertia platform data acquisition system components.
 ### Software Installation
 
 1. Download this repository to a local PC with direct USB access to the microcontrollers. Use the latest
-   stable release from [GitHub](https://github.com/Sun-Lab-NBB/sollertia-micro-controllers/releases), as it always
-   reflects the current state of the Sollertia platform data acquisition hardware.
+   [stable release](https://github.com/Sun-Lab-NBB/sollertia-micro-controllers/releases), as it always reflects the
+   current state of the Sollertia platform data acquisition hardware.
 2. Open the project in the 'PlatformIO' IDE.
 3. Optionally disable all hardware modules not used by the target acquisition system. This project is intended to be
    reused by all Sollertia platform acquisition systems, so it contains all hardware modules the platform supports.
@@ -96,7 +96,7 @@ Sollertia platform data acquisition system components.
    than a single controller at a time, as some systems have issues selecting the correct upload target otherwise.
 5. After uploading the firmware, disconnect the microcontroller from the host PC and connect the next microcontroller.
 6. Repeat steps 4 and 5 until all microcontrollers are configured.
-7. Connect all microcontrollers to the PC that will manage the data acquisition runtime (the main data-acquisition PC).
+7. Connect all microcontrollers to the PC that manages the data acquisition runtime (the main data-acquisition PC).
 
 ***Warning!*** Always name the environment when uploading, as in `pio run -e teensy41_actor -t upload`. An upload
 command that omits the environment processes every environment in turn, flashing the connected board with each target
@@ -162,9 +162,8 @@ handshake the acquisition runtime performs when a session starts.
 The library version is declared in two places that must move together, `PROJECT_NUMBER` in `Doxyfile` and `release`
 in `docs/source/conf.py`.
 
-For the ordered step lists, the roster of constants that must move across repositories, and the paired-class
-contract, use the **experiment** plugin skills described under
-[AI-Assisted Development](#ai-assisted-development).
+For the ordered step lists, the roster of constants that must move across repositories, and the paired-class contract,
+use the **experiment** plugin skills described under [AI-Assisted Development](#ai-assisted-development).
 
 ___
 

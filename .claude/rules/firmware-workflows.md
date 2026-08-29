@@ -15,8 +15,8 @@ tox -e deploy                        # Upload the built documentation to the pro
 
 1. Invoke `experiment:microcontroller-interface` first to understand the cross-repo paired Module + Interface
    contract (slmc firmware conventions + sle Python wrapper conventions + the cross-side agreement they must
-   honor). Allocate a new module type code from the registry in
-   `experiment:microcontroller-interface`'s `references/module-catalog.md`.
+   honor). Allocate a new module type code from the registry in `experiment:microcontroller-interface`'s
+   `references/module-catalog.md`.
 2. Invoke `microcontroller:firmware-module` for the base C++ Module subclass mechanics (template parameter
    conventions, `CustomRuntimeParameters` struct, `kCustomStatusCodes` / `kModuleCommands` enums, stage-based
    command execution, `SendData` patterns) that `experiment:microcontroller-interface` extends.
@@ -24,8 +24,8 @@ tox -e deploy                        # Upload the built documentation to the pro
    `experiment:microcontroller-interface`'s "slmc firmware conventions" section.
 4. Add the module's `#include` and instantiation block to the appropriate target in `src/main.cpp` (for the
    current Mesoscope-VR deployment, this means choosing one of ACTOR / SENSOR / ENCODER, and for a different
-   consumer, the choice depends on that system's target layout). Add the new instance to the
-   `Module* modules[]` array for that target.
+   consumer, the choice depends on that system's target layout). Add the new instance to the `Module* modules[]`
+   array for that target.
 5. Add the new header to `Doxyfile`'s `INPUT` list and to `docs/source/api.rst` for documentation coverage.
 6. Update `experiment:microcontroller-interface`'s `references/module-catalog.md` with the new entry.
 7. Bump the slmc version. This project ships no `library.json`, so the two in-repository copies of the version are
@@ -68,8 +68,8 @@ needs a module the seven existing ones do not already cover.
    the exact sollertia-experiment mirror for each of these constants, so the companion change is identified before the
    firmware change is made rather than after.
 2. These are top-level cross-repository contracts. Coordinate with the consuming acquisition system's maintainers
-   before changing. For the current Mesoscope-VR consumer, this means coordinating with
-   `mesoscope:mesoscope-vr`'s maintenance contract.
+   before changing. For the current Mesoscope-VR consumer, this means coordinating with `mesoscope:mesoscope-vr`'s
+   maintenance contract.
 3. Update `main.cpp` (`kControllerID`, `kKeepaliveInterval`, `kSerialBaudRate`, `kAnalogReadResolution`, module
    instantiation order) and propagate each change to its host mirror. The controller IDs and the keepalive interval
    reach the consumer's binding class (for Mesoscope-VR: `MicroControllerInterfaces` in
